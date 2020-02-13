@@ -807,7 +807,7 @@ void applicationLoop() {
 
 	modelMatrixLambo = glm::translate(modelMatrixLambo, glm::vec3(23.0, 0.0, 0.0));
 
-	modelMatrixDart = glm::translate(modelMatrixDart, glm::vec3(3.0, 0.0, 20.0));
+	modelMatrixDart = glm::translate(modelMatrixDart, glm::vec3(20.0, 0.0, 3.0));
 	
 	modelMatrixBuzz = glm::translate(modelMatrixBuzz, glm::vec3(2.0, 0.0, 2.0));
 	
@@ -1096,54 +1096,84 @@ void applicationLoop() {
 		modelBuzzTorso.render(modelMatrixBuzzTorso);
 		
 		glm::mat4 modelMatrixBuzzHead = glm::mat4(modelMatrixBuzzTorso);
+		modelMatrixBuzzHead = glm::translate(modelMatrixBuzzHead, glm::vec3(0, 0.628, -0.015));
+		modelMatrixBuzzHead = glm::translate(modelMatrixBuzzHead, glm::vec3(0, -0.628, 0.015));
 		modelBuzzHead.render(modelMatrixBuzzHead);
 		
 		glm::mat4 modelMatrixBuzzRightWing2 = glm::mat4(modelMatrixBuzzTorso);
 		modelBuzzRightWing2.render(modelMatrixBuzzRightWing2);
 
 		glm::mat4 modelMatrixBuzzRightWing1 = glm::mat4(modelMatrixBuzzTorso);
+		modelMatrixBuzzRightWing1 = glm::translate(modelMatrixBuzzRightWing1, glm::vec3(-0.067, 0.566, -0.136));
+		modelMatrixBuzzRightWing1 = glm::translate(modelMatrixBuzzRightWing1, glm::vec3(0.067, -0.566, 0.136));
 		modelBuzzRightWing1.render(modelMatrixBuzzRightWing1);
 
 		glm::mat4 modelMatrixBuzzRightThigh = glm::mat4(modelMatrixBuzzTorso);
+		modelMatrixBuzzRightThigh = glm::translate(modelMatrixBuzzRightThigh, glm::vec3(-0.028, 0.348, -0.005));
+		modelMatrixBuzzRightThigh = glm::translate(modelMatrixBuzzRightThigh, glm::vec3(0.028, -0.348, 0.005));
 		modelBuzzRightThigh.render(modelMatrixBuzzRightThigh);
 
 		glm::mat4 modelMatrixBuzzRightHand = glm::mat4(modelMatrixBuzzTorso);
+		modelMatrixBuzzRightHand = glm::translate(modelMatrixBuzzRightHand, glm::vec3(-0.417, 0.587, 0.076));
+		modelMatrixBuzzRightHand = glm::translate(modelMatrixBuzzRightHand, glm::vec3(0.417, -0.587, -0.076));
 		modelBuzzRightHand.render(modelMatrixBuzzRightHand);
 
 		glm::mat4 modelMatrixBuzzRightForearm = glm::mat4(modelMatrixBuzzTorso);
+		modelMatrixBuzzRightForearm = glm::translate(modelMatrixBuzzRightForearm, glm::vec3(-0.271, 0.581, 0.007));
+		modelMatrixBuzzRightForearm = glm::translate(modelMatrixBuzzRightForearm, glm::vec3(0.271, -0.581, -0.007));
 		modelBuzzRightForearm.render(modelMatrixBuzzRightForearm);
 
 		glm::mat4 modelMatrixBuzzRightFoot = glm::mat4(modelMatrixBuzzTorso);
+		modelMatrixBuzzRightFoot = glm::translate(modelMatrixBuzzRightFoot, glm::vec3(-0.072, 0.113, -0.027));
+		modelMatrixBuzzRightFoot = glm::translate(modelMatrixBuzzRightFoot, glm::vec3(0.072, -0.113, 0.027));
 		modelBuzzRightFoot.render(modelMatrixBuzzRightFoot);
 
 		glm::mat4 modelMatrixBuzzRightCalf = glm::mat4(modelMatrixBuzzTorso);
+		modelMatrixBuzzRightCalf = glm::translate(modelMatrixBuzzRightCalf, glm::vec3(-0.063, 0.255, -0.009));
+		modelMatrixBuzzRightCalf = glm::translate(modelMatrixBuzzRightCalf, glm::vec3(0.063, -0.255, 0.009));
 		modelBuzzRightCalf.render(modelMatrixBuzzRightCalf);
 
 		glm::mat4 modelMatrixBuzzRightArm = glm::mat4(modelMatrixBuzzTorso);
+		modelMatrixBuzzRightArm = glm::translate(modelMatrixBuzzRightArm, glm::vec3(-0.133, 0.581, -0.019));
+		modelMatrixBuzzRightArm = glm::translate(modelMatrixBuzzRightArm, glm::vec3(0.133, -0.581, 0.019));
 		modelBuzzRightArm.render(modelMatrixBuzzRightArm);
 
 		glm::mat4 modelMatrixBuzzLeftWing2 = glm::mat4(modelMatrixBuzzTorso);
 		modelBuzzLeftWing2.render(modelMatrixBuzzLeftWing2);
 
 		glm::mat4 modelMatrixBuzzLeftWing1 = glm::mat4(modelMatrixBuzzTorso);
+		modelMatrixBuzzLeftWing1 = glm::translate(modelMatrixBuzzLeftWing1, glm::vec3(0.067, 0.562, -0.131));
+		modelMatrixBuzzLeftWing1 = glm::translate(modelMatrixBuzzLeftWing1, glm::vec3(-0.067, -0.562, 0.131));
 		modelBuzzLeftWing1.render(modelMatrixBuzzLeftWing1);
 
 		glm::mat4 modelMatrixBuzzLeftThigh = glm::mat4(modelMatrixBuzzTorso);
+		modelMatrixBuzzLeftThigh = glm::translate(modelMatrixBuzzLeftThigh, glm::vec3(0.028, 0.348, -0.005));
+		modelMatrixBuzzLeftThigh = glm::translate(modelMatrixBuzzLeftThigh, glm::vec3(-0.028, -0.348, 0.005));
 		modelBuzzLeftThigh.render(modelMatrixBuzzLeftThigh);
 
 		glm::mat4 modelMatrixBuzzLeftHand = glm::mat4(modelMatrixBuzzTorso);
+		modelMatrixBuzzLeftHand = glm::translate(modelMatrixBuzzLeftHand, glm::vec3(0.417, 0.587, 0.076));
+		modelMatrixBuzzLeftHand = glm::translate(modelMatrixBuzzLeftHand, glm::vec3(-0.417, -0.587, -0.076));
 		modelBuzzLeftHand.render(modelMatrixBuzzLeftHand);
 
 		glm::mat4 modelMatrixBuzzLeftForearm = glm::mat4(modelMatrixBuzzTorso);
+		modelMatrixBuzzLeftForearm = glm::translate(modelMatrixBuzzLeftForearm, glm::vec3(0.271, 0.581, 0.007));
+		modelMatrixBuzzLeftForearm = glm::translate(modelMatrixBuzzLeftForearm, glm::vec3(-0.271, -0.581, -0.007));
 		modelBuzzLeftForearm.render(modelMatrixBuzzLeftForearm);
 
 		glm::mat4 modelMatrixBuzzLeftFoot = glm::mat4(modelMatrixBuzzTorso);
+		modelMatrixBuzzLeftFoot = glm::translate(modelMatrixBuzzLeftFoot, glm::vec3(0.072, 0.113, -0.027));
+		modelMatrixBuzzLeftFoot = glm::translate(modelMatrixBuzzLeftFoot, glm::vec3(-0.072, -0.113, 0.027));
 		modelBuzzLeftFoot.render(modelMatrixBuzzLeftFoot);
 
 		glm::mat4 modelMatrixBuzzLeftCalf = glm::mat4(modelMatrixBuzzTorso);
+		modelMatrixBuzzLeftCalf = glm::translate(modelMatrixBuzzLeftCalf, glm::vec3(0.063, 0.255, -0.009));
+		modelMatrixBuzzLeftCalf = glm::translate(modelMatrixBuzzLeftCalf, glm::vec3(-0.063, -0.255, 0.009));
 		modelBuzzLeftCalf.render(modelMatrixBuzzLeftCalf);
 
 		glm::mat4 modelMatrixBuzzLeftArm = glm::mat4(modelMatrixBuzzTorso);
+		modelMatrixBuzzLeftArm = glm::translate(modelMatrixBuzzLeftArm, glm::vec3(0.133, 0.581, -0.019));
+		modelMatrixBuzzLeftArm = glm::translate(modelMatrixBuzzLeftArm, glm::vec3(-0.133, -0.581, 0.019));
 		modelBuzzLeftArm.render(modelMatrixBuzzLeftArm);
 
 		glm::mat4 modelMatrixBuzzHip = glm::mat4(modelMatrixBuzzTorso);
