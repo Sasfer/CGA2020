@@ -1138,7 +1138,8 @@ void applicationLoop() {
 		glm::mat4 modelMatrixBuzzTorso = glm::mat4(modelMatrixBuzz);
 		modelMatrixBuzzTorso = glm::scale(modelMatrixBuzzTorso, glm::vec3(3.0, 3.0, 3.0));
 		modelBuzzTorso.render(modelMatrixBuzzTorso);
-			//Head
+		
+		//Head
 		glm::mat4 modelMatrixBuzzHead = glm::mat4(modelMatrixBuzzTorso);
 		modelMatrixBuzzHead = glm::rotate(modelMatrixBuzzHead, rotBuzzHead, glm::vec3(0, 1, 0));
 		modelBuzzHead.render(modelMatrixBuzzHead);
@@ -1148,7 +1149,8 @@ void applicationLoop() {
 
 		glm::mat4 modelMatrixBuzzRightWing1 = glm::mat4(modelMatrixBuzzTorso);
 		modelBuzzRightWing1.render(modelMatrixBuzzRightWing1);
-			//Right leg
+		
+		//Right leg
 		glm::mat4 modelMatrixBuzzRightThigh = glm::mat4(modelMatrixBuzzTorso);
 		modelMatrixBuzzRightThigh = glm::translate(modelMatrixBuzzRightThigh, glm::vec3(0.058827, 0.397428, -0.007182));
 		modelMatrixBuzzRightThigh = glm::rotate(modelMatrixBuzzRightThigh, rotBuzzRightLeg, glm::vec3(1, 0, 0));
@@ -1167,7 +1169,7 @@ void applicationLoop() {
 		modelMatrixBuzzRightCalf = glm::translate(modelMatrixBuzzRightCalf, glm::vec3(-0.058827, -0.397428, 0.007182));
 		modelBuzzRightCalf.render(modelMatrixBuzzRightCalf);
 			
-			//Right Arm
+		//Right Arm
 		glm::mat4 modelMatrixBuzzRightArm = glm::mat4(modelMatrixBuzzTorso);
 		modelMatrixBuzzRightArm = glm::translate(modelMatrixBuzzRightArm, glm::vec3(-0.170842, 0.57826, 0.048919));
 		modelMatrixBuzzRightArm = glm::rotate(modelMatrixBuzzRightArm, rotBuzzRightArm, glm::vec3(0, 0, 1));
@@ -1192,7 +1194,7 @@ void applicationLoop() {
 		glm::mat4 modelMatrixBuzzLeftWing1 = glm::mat4(modelMatrixBuzzTorso);
 		modelBuzzLeftWing1.render(modelMatrixBuzzLeftWing1);
 
-			//Left leg
+		//Left leg
 		glm::mat4 modelMatrixBuzzLeftThigh = glm::mat4(modelMatrixBuzzTorso);
 		modelMatrixBuzzLeftThigh = glm::translate(modelMatrixBuzzLeftThigh, glm::vec3(0.170842, 0.57826, 0.048919));
 		modelMatrixBuzzLeftThigh = glm::rotate(modelMatrixBuzzLeftThigh, rotBuzzLeftLeg, glm::vec3(1, 0, 0));
@@ -1210,7 +1212,7 @@ void applicationLoop() {
 		modelMatrixBuzzLeftCalf = glm::rotate(modelMatrixBuzzLeftCalf, rotBuzzLeftLeg, glm::vec3(1, 0, 0));
 		modelMatrixBuzzLeftCalf = glm::translate(modelMatrixBuzzLeftCalf, glm::vec3(-0.170842, -0.57826, -0.048919));
 		modelBuzzLeftCalf.render(modelMatrixBuzzLeftCalf);
-			//Left Arm
+		//Left Arm
 		glm::mat4 modelMatrixBuzzLeftArm = glm::mat4(modelMatrixBuzzTorso);
 		modelMatrixBuzzLeftArm = glm::translate(modelMatrixBuzzLeftArm, glm::vec3(0.170842, 0.57826, 0.048919));
 		modelMatrixBuzzLeftArm = glm::rotate(modelMatrixBuzzLeftArm, rotBuzzLeftArm, glm::vec3(0, 0, 1));
