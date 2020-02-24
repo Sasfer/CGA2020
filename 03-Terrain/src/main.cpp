@@ -77,11 +77,28 @@ Model modelDartLegoLeftHand;
 Model modelDartLegoRightHand;
 Model modelDartLegoLeftLeg;
 Model modelDartLegoRightLeg;
+
 // Model animate instance
 // Mayow
 Model mayowModelAnimate;
+// Cowboy
+Model modelAnimateCowboy;
+// Rojo
+Model rojoModelAnimate;
+
 // Terrain model instance
-Terrain terrain(-1, -1, 200, 8, "../Textures/heightmap.png");
+Terrain terrain(-1, -1, 200, 10, "../Textures/heightmap.png");
+
+// Los dos primeros parametros son una referencia para colocar el terreno
+// -1,-1|0,-1
+//______|______
+//-1,0  |  0.0
+//		|
+// De tal forma que se pueden tener varios terrenos
+// El siguiente parametro nos permite especificar las subdivisiones en unidades unitarias
+// El siguiente parametro hace referencia a la altura máxima
+// El color blanco 256*256*256 -> 8 unidades, la cual hace referencia a la altura maxima
+// El ultimo parametro hace referencia al archivo que define el mapa
 
 GLuint textureCespedID, textureWallID, textureWindowID, textureHighwayID, textureLandingPadID;
 GLuint skyboxTextureID;
@@ -112,6 +129,8 @@ glm::mat4 modelMatrixLambo = glm::mat4(1.0);
 glm::mat4 modelMatrixAircraft = glm::mat4(1.0);
 glm::mat4 modelMatrixDart = glm::mat4(1.0f);
 glm::mat4 modelMatrixMayow = glm::mat4(1.0f);
+glm::mat4 modelMatrixRojo = glm::mat4(1.0f);
+glm::mat4 modelMatrixCowboy = glm::mat4(1.0f);
 
 float rotDartHead = 0.0, rotDartLeftArm = 0.0, rotDartLeftHand = 0.0, rotDartRightArm = 0.0, rotDartRightHand = 0.0, rotDartLeftLeg = 0.0, rotDartRightLeg = 0.0;
 int modelSelected = 0;
@@ -122,6 +141,9 @@ bool saveFrame = false, availableSave = true;
 std::ofstream myfile;
 std::string fileName = "";
 bool record = false;
+
+// Variables cambio de animacion
+int numAnimacion = 0;
 
 // Joints interpolations Dart Lego
 std::vector<std::vector<float>> keyFramesDartJoints;
@@ -226,6 +248,7 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	modelAircraft.loadModel("../models/Aircraft_obj/E 45 Aircraft_obj.obj");
 	modelAircraft.setShader(&shaderMulLighting);
 
+	// Se inicializa y se indica el shader
 	terrain.init();
 	terrain.setShader(&shaderMulLighting);
 
@@ -270,9 +293,19 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	modelDartLegoRightLeg.loadModel("../models/LegoDart/LeoDart_right_leg.obj");
 	modelDartLegoRightLeg.setShader(&shaderMulLighting);
 
-	//Mayow
+	// Mayow
 	mayowModelAnimate.loadModel("../models/mayow/personaje2.fbx");
 	mayowModelAnimate.setShader(&shaderMulLighting);
+
+	// Cowboy
+	modelAnimateCowboy.loadModel("../models/cowboy/Character Running.fbx");
+	modelAnimateCowboy.setShader(&shaderMulLighting);
+
+	// Rojo
+	// El archivo rojoAnimado1 contiene solo una animación
+	// El archivo rojoAnimado2 contiene solo dos animaciones
+	rojoModelAnimate.loadModel("../models/rojo/rojoAnimado2.fbx");
+	rojoModelAnimate.setShader(&shaderMulLighting);
 
 	camera->setPosition(glm::vec3(0.0, 3.0, 4.0));
 
@@ -507,6 +540,8 @@ void destroy() {
 
 	// Custom objects animate
 	mayowModelAnimate.destroy();
+	modelAnimateCowboy.destroy();
+	rojoModelAnimate.destroy();
 
 	// Textures Delete
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -565,6 +600,14 @@ void mouseButtonCallback(GLFWwindow *window, int button, int state, int mod) {
 bool processInput(bool continueApplication) {
 	if (exitApp || glfwWindowShouldClose(window) != 0) {
 		return false;
+	}
+
+	// Cambiar animacion
+	if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
+		numAnimacion++;
+		if (numAnimacion >= 2) {
+			numAnimacion = 0;
+		}
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
@@ -690,6 +733,11 @@ void applicationLoop() {
 	modelMatrixMayow = glm::translate(modelMatrixMayow, glm::vec3(13.0f, 0.05f, -5.0f));
 	modelMatrixMayow = glm::rotate(modelMatrixMayow, glm::radians(-90.0f), glm::vec3(0, 1, 0));
 
+	modelMatrixCowboy = glm::translate(modelMatrixCowboy, glm::vec3(1.0f, 1.0f, 3.0f));
+
+	modelMatrixRojo = glm::translate(modelMatrixRojo, glm::vec3(6.0f, 1.0f, -5.0f));
+	modelMatrixRojo = glm::rotate(modelMatrixRojo, glm::radians(-90.0f), glm::vec3(0, 1, 0));
+	
 	// Variables to interpolation key frames
 	fileName = "../animaciones/animation_dart_joints.txt";
 	keyFramesDartJoints = getKeyRotFrames(fileName);
@@ -754,14 +802,33 @@ void applicationLoop() {
 		/*******************************************
 		 * Terrain Cesped
 		 *******************************************/
-		glm::mat4 modelCesped = glm::mat4(1.0);
-		modelCesped = glm::translate(modelCesped, glm::vec3(0.0, 0.0, 0.0));
-		modelCesped = glm::scale(modelCesped, glm::vec3(200.0, 0.001, 200.0));
-		// Se activa la textura del agua
+		// Esta parte se encarga de hace el render de todo el terreno
+
+		//glm::mat4 modelCesped = glm::mat4(1.0);
+		//modelCesped = glm::translate(modelCesped, glm::vec3(0.0, 0.0, 0.0));
+		//modelCesped = glm::scale(modelCesped, glm::vec3(200.0, 0.001, 200.0));
+		
+		// *Se activa la textura del agua
+		// En este caso se encarga de activar la textura del cesped, pero esto
+		// nos permitirá tener multiples textura, por lo que se indica que se empleara la textura 0
+		
+		// **Se indica que la textura sera de 2 dimensiones y se indica la misma textura
+		
+		// ***Para repetir
+		// Es una variable que es global, es decir, que siempre vale el mismo valor
+	    // para todos los vertices, shaders, etc, se indica que la textura se escale ## veces
+		
+		// ****Para centrar el terreno se indica el valor de 15 0 15, es decir, 
+		// se varia el primer y ultimo valor, indicando el mismo para ambos casos
+
+		// *Se idica que textura emplear
 		glActiveTexture(GL_TEXTURE0);
+		// **Se indica que la textura es de dos dimensiones y que se empleará siempre la misma
 		glBindTexture(GL_TEXTURE_2D, textureCespedID);
-		shaderMulLighting.setVectorFloat2("scaleUV", glm::value_ptr(glm::vec2(80, 80)));
-		terrain.setPosition(glm::vec3(100, 0, 100));
+		// ***Se indica que la textura se repetira para poder visulizarla mejor
+		shaderMulLighting.setVectorFloat2("scaleUV", glm::value_ptr(glm::vec2(150, 150)));
+		// ****Se posiciona la textura
+		terrain.setPosition(glm::vec3(75, 0, 75));
 		terrain.render();
 		shaderMulLighting.setVectorFloat2("scaleUV", glm::value_ptr(glm::vec2(0, 0)));
 		glBindTexture(GL_TEXTURE_2D, 0);
@@ -869,6 +936,19 @@ void applicationLoop() {
 		modelMatrixMayowBody = glm::scale(modelMatrixMayowBody, glm::vec3(0.021, 0.021, 0.021));
 		mayowModelAnimate.setAnimationIndex(0);
 		mayowModelAnimate.render(modelMatrixMayowBody);
+
+		modelMatrixCowboy[3][1] = terrain.getHeightTerrain(modelMatrixCowboy[3][0], modelMatrixCowboy[3][2]);
+		glm::mat4 modelMatrixCowboyBody = glm::mat4(modelMatrixCowboy);
+		modelMatrixCowboyBody = glm::scale(modelMatrixCowboyBody, glm::vec3(0.005, 0.005, 0.005));
+		modelAnimateCowboy.setAnimationIndex(0);
+		modelAnimateCowboy.render(modelMatrixCowboyBody);
+
+		modelMatrixRojo[3][1] = terrain.getHeightTerrain(modelMatrixRojo[3][0], modelMatrixRojo[3][2]);
+		glm::mat4 modelMatrixRojoBody = glm::mat4(modelMatrixRojo);
+		modelMatrixRojoBody = glm::translate(modelMatrixRojoBody, glm::vec3(0.0, 3.0, 0.0));
+		modelMatrixRojoBody = glm::scale(modelMatrixRojoBody, glm::vec3(0.002, 0.002, 0.002));
+		rojoModelAnimate.setAnimationIndex(numAnimacion);
+		rojoModelAnimate.render(modelMatrixRojoBody);
 
 		/*******************************************
 		 * Skybox
