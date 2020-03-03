@@ -67,11 +67,17 @@ vec3 calculateDirectionalLight(Light light, vec3 direction){
 	if(tiledCoords.x != 0 && tiledCoords.y != 0)
 		tiledCoords = scaleUV * tiledCoords;
 
+    // Referencia con respecto al mapa de multiples texturas y la coordenadas UV
 	vec4 blendMapColor = texture(blendMapTexture, our_uv);
+	// Obtención del color respecto al mapa en escala de negro - RGB
 	float backTextureAmount = 1 - (blendMapColor.r + blendMapColor.g + blendMapColor.b);
+	// Textura color negro -> arena
 	vec4 backgroundTextureColor = texture(backgroundTexture, tiledCoords) * backTextureAmount;
+	// Textura color rojo -> piedra
 	vec4 rTextureColor = texture(rTexture, tiledCoords) * blendMapColor.r;
+	// Textura color verde -> musgo
 	vec4 gTextureColor = texture(gTexture, tiledCoords) * blendMapColor.g;
+	// Textura color azul -> agua
 	vec4 bTextureColor = texture(bTexture, tiledCoords) * blendMapColor.b;
 	vec4 totalColor = backgroundTextureColor + rTextureColor + gTextureColor + bTextureColor;
 

@@ -82,11 +82,17 @@ Model modelDartLegoRightLeg;
 // Model animate instance
 // Mayow
 Model mayowModelAnimate;
+
+// Rojo
+Model rojoModelAnimate;
+
 // Terrain model instance
 Terrain terrain(-1, -1, 200, 8, "../Textures/heightmap.png");
 
 GLuint textureCespedID, textureWallID, textureWindowID, textureHighwayID, textureLandingPadID;
+
 GLuint textureTerrainBackgroundID, textureTerrainRID, textureTerrainGID, textureTerrainBID, textureTerrainBlendMapID;
+
 GLuint skyboxTextureID;
 
 GLenum types[6] = {
@@ -115,6 +121,7 @@ glm::mat4 modelMatrixLambo = glm::mat4(1.0);
 glm::mat4 modelMatrixAircraft = glm::mat4(1.0);
 glm::mat4 modelMatrixDart = glm::mat4(1.0f);
 glm::mat4 modelMatrixMayow = glm::mat4(1.0f);
+glm::mat4 modelMatrixRojo = glm::mat4(1.0f);
 
 float rotDartHead = 0.0, rotDartLeftArm = 0.0, rotDartLeftHand = 0.0, rotDartRightArm = 0.0, rotDartRightHand = 0.0, rotDartLeftLeg = 0.0, rotDartRightLeg = 0.0;
 int modelSelected = 0;
@@ -125,6 +132,9 @@ bool saveFrame = false, availableSave = true;
 std::ofstream myfile;
 std::string fileName = "";
 bool record = false;
+
+// Variables cambio de animacion
+int numAnimacion = 0;
 
 // Joints interpolations Dart Lego
 std::vector<std::vector<float>> keyFramesDartJoints;
@@ -278,6 +288,12 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	//Mayow
 	mayowModelAnimate.loadModel("../models/mayow/personaje2.fbx");
 	mayowModelAnimate.setShader(&shaderMulLighting);
+
+	// Rojo
+	// El archivo rojoAnimado1 contiene solo una animación
+	// El archivo rojoAnimado2 contiene solo dos animaciones
+	rojoModelAnimate.loadModel("../models/rojo/rojoAnimado2.fbx");
+	rojoModelAnimate.setShader(&shaderMulLighting);
 
 	camera->setPosition(glm::vec3(0.0, 3.0, 4.0));
 
@@ -471,28 +487,29 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	textureLandingPad.freeImage(bitmap);
 
 	// Definiendo la textura a utilizar
-	Texture textureTerrainBackground("../Textures/grassy2.png");
+	// Texture textureTerrainBackground("../Textures/grassy2.png");
+	// Color NEGRO en el mapa de texturas
+	Texture textureTerrainBackground("../Textures/arena.png");
 	// Carga el mapa de bits (FIBITMAP es el tipo de dato de la libreria)
 	bitmap = textureTerrainBackground.loadImage();
 	// Convertimos el mapa de bits en un arreglo unidimensional de tipo unsigned char
-	data = textureTerrainBackground.convertToData(bitmap, imageWidth,
-			imageHeight);
+	data = textureTerrainBackground.convertToData(bitmap, imageWidth, imageHeight);
 	// Creando la textura con id 1
 	glGenTextures(1, &textureTerrainBackgroundID);
 	// Enlazar esa textura a una tipo de textura de 2D.
 	glBindTexture(GL_TEXTURE_2D, textureTerrainBackgroundID);
 	// set the texture wrapping parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // set texture wrapping to GL_REPEAT (default wrapping method)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); 
+	// set texture wrapping to GL_REPEAT (default wrapping method)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	// set texture filtering parameters
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	// Verifica si se pudo abrir la textura
 	if (data) {
-		// Transferis los datos de la imagen a memoria
-		// Tipo de textura, Mipmaps, Formato interno de openGL, ancho, alto, Mipmaps,
-		// Formato interno de la libreria de la imagen, el tipo de dato y al apuntador
-		// a los datos
+		// Transferir los datos de la imagen a memoria
+		// Tipo de textura, mipmaps, formato interno de openGL, ancho, alto, mipmaps, formato 
+		// interno de la libreria de la imagen, el tipo de dato y al apuntador a los datos
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageWidth, imageHeight, 0,
 		GL_BGRA, GL_UNSIGNED_BYTE, data);
 		// Generan los niveles del mipmap (OpenGL es el ecargado de realizarlos)
@@ -503,7 +520,9 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	textureTerrainBackground.freeImage(bitmap);
 
 	// Definiendo la textura a utilizar
-	Texture textureTerrainR("../Textures/mud.png");
+	//Texture textureTerrainR("../Textures/mud.png");
+	//Color ROJO en el mapa de texturas
+	Texture textureTerrainR("../Textures/piedras.png");
 	// Carga el mapa de bits (FIBITMAP es el tipo de dato de la libreria)
 	bitmap = textureTerrainR.loadImage();
 	// Convertimos el mapa de bits en un arreglo unidimensional de tipo unsigned char
@@ -535,7 +554,9 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	textureTerrainR.freeImage(bitmap);
 
 	// Definiendo la textura a utilizar
-	Texture textureTerrainG("../Textures/grassFlowers.png");
+	//Texture textureTerrainG("../Textures/grassFlowers.png");
+	//Color VERDE en el mapa de texturas
+	Texture textureTerrainG("../Textures/musgo.png");
 	// Carga el mapa de bits (FIBITMAP es el tipo de dato de la libreria)
 	bitmap = textureTerrainG.loadImage();
 	// Convertimos el mapa de bits en un arreglo unidimensional de tipo unsigned char
@@ -567,7 +588,9 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	textureTerrainG.freeImage(bitmap);
 
 	// Definiendo la textura a utilizar
-	Texture textureTerrainB("../Textures/path.png");
+	//Texture textureTerrainB("../Textures/path.png");
+	//Color AZUL en el mapa de texturas
+	Texture textureTerrainB("../Textures/agua.png");
 	// Carga el mapa de bits (FIBITMAP es el tipo de dato de la libreria)
 	bitmap = textureTerrainB.loadImage();
 	// Convertimos el mapa de bits en un arreglo unidimensional de tipo unsigned char
@@ -673,6 +696,7 @@ void destroy() {
 
 	// Custom objects animate
 	mayowModelAnimate.destroy();
+	rojoModelAnimate.destroy();
 
 	// Textures Delete
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -736,6 +760,14 @@ void mouseButtonCallback(GLFWwindow *window, int button, int state, int mod) {
 bool processInput(bool continueApplication) {
 	if (exitApp || glfwWindowShouldClose(window) != 0) {
 		return false;
+	}
+
+	// Cambiar animacion
+	if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
+		numAnimacion++;
+		if (numAnimacion >= 2) {
+			numAnimacion = 0;
+		}
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
@@ -861,6 +893,9 @@ void applicationLoop() {
 	modelMatrixMayow = glm::translate(modelMatrixMayow, glm::vec3(13.0f, 0.05f, -5.0f));
 	modelMatrixMayow = glm::rotate(modelMatrixMayow, glm::radians(-90.0f), glm::vec3(0, 1, 0));
 
+	modelMatrixRojo = glm::translate(modelMatrixRojo, glm::vec3(6.0f, 1.0f, -5.0f));
+	modelMatrixRojo = glm::rotate(modelMatrixRojo, glm::radians(-90.0f), glm::vec3(0, 1, 0));
+
 	// Variables to interpolation key frames
 	fileName = "../animaciones/animation_dart_joints.txt";
 	keyFramesDartJoints = getKeyRotFrames(fileName);
@@ -944,19 +979,19 @@ void applicationLoop() {
 		glm::mat4 modelCesped = glm::mat4(1.0);
 		modelCesped = glm::translate(modelCesped, glm::vec3(0.0, 0.0, 0.0));
 		modelCesped = glm::scale(modelCesped, glm::vec3(200.0, 0.001, 200.0));
-		// Se activa la textura del background
+		// Se activa la textura del background/arena
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, textureTerrainBackgroundID);
 		shaderTerrain.setInt("backgroundTexture", 0);
-		// Se activa la textura de tierra
+		// Se activa la textura de tierra/piedras
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, textureTerrainRID);
 		shaderTerrain.setInt("rTexture", 1);
-		// Se activa la textura de hierba
+		// Se activa la textura de hierba/musgo
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, textureTerrainGID);
 		shaderTerrain.setInt("gTexture", 2);
-		// Se activa la textura del camino
+		// Se activa la textura del camino/agua
 		glActiveTexture(GL_TEXTURE3);
 		glBindTexture(GL_TEXTURE_2D, textureTerrainBID);
 		shaderTerrain.setInt("bTexture", 3);
@@ -1072,7 +1107,14 @@ void applicationLoop() {
 		modelMatrixMayowBody = glm::scale(modelMatrixMayowBody, glm::vec3(0.021, 0.021, 0.021));
 		mayowModelAnimate.setAnimationIndex(0);
 		mayowModelAnimate.render(modelMatrixMayowBody);
-
+		
+		modelMatrixRojo[3][1] = terrain.getHeightTerrain(modelMatrixRojo[3][0], modelMatrixRojo[3][2]);
+		glm::mat4 modelMatrixRojoBody = glm::mat4(modelMatrixRojo);
+		modelMatrixRojoBody = glm::translate(modelMatrixRojoBody, glm::vec3(0.0, 3.0, 0.0));
+		modelMatrixRojoBody = glm::scale(modelMatrixRojoBody, glm::vec3(0.002, 0.002, 0.002));
+		rojoModelAnimate.setAnimationIndex(numAnimacion);
+		rojoModelAnimate.render(modelMatrixRojoBody);
+		
 		/*******************************************
 		 * Skybox
 		 *******************************************/
