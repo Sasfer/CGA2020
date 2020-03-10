@@ -158,13 +158,14 @@ float dorRotCount = 0.0;
 // Forma sofisticada para manejar un arreglo dinámico
 // Se define la posición y orientación hacia el eje Y en radianes 
 // de las lamparas tipo "lamp1" y "lamp2", respectivamente
-std::vector<glm::vec3> lamp1Position = { glm::vec3(-7.03, 0, -19.14), glm::vec3(
-		24.41, 0, -34.57), glm::vec3(-10.15, 0, -54.10), glm::vec3(-4.0, 0.0, 7.0) };
-std::vector<float> lamp1Orientation = { -17.0, -82.67, 23.70, 0.0};
+std::vector<glm::vec3> lamp1Position = { glm::vec3(5.66, 0, 43.16), glm::vec3(25.66, 0, 53.16),
+										 glm::vec3(-14.34, 0, 63.16), glm::vec3(12.0, 0.0, 2.0)};
+std::vector<float> lamp1Orientation = {-90.0, 90.0, 90.0, 45.0};
 
-std::vector<glm::vec3> lamp2Position = { glm::vec3(-36.52, 0, -23.24),
-		glm::vec3(-52.73, 0, -3.90) };
-std::vector<float> lamp2Orientation = {21.37 + 90, -65.0 + 90};
+std::vector<glm::vec3> lamp2Position = { glm::vec3(-12.0 , 0.0, -2.0),glm::vec3(-15.0, 0, 45.0),
+										 glm::vec3(-60.0, 0, 65.0) , glm::vec3(-45.0, 0, 32.0), 
+										 glm::vec3(-82.0, 0, 22.0) };
+std::vector<float> lamp2Orientation = {0.0, 0.0, 0.0, 0.0, 0.0};
 
 double deltaTime;
 double currTime, lastTime;
@@ -1029,7 +1030,7 @@ void applicationLoop() {
 			matrixAdjustLamp = glm::translate(matrixAdjustLamp, lamp1Position[i]);
 			matrixAdjustLamp = glm::rotate(matrixAdjustLamp, glm::radians(lamp1Orientation[i]), glm::vec3(0, 1, 0));
 			matrixAdjustLamp = glm::scale(matrixAdjustLamp, glm::vec3(0.5, 0.5, 0.5));
-			matrixAdjustLamp = glm::translate(matrixAdjustLamp, glm::vec3(0, 10.3585, 0));
+			matrixAdjustLamp = glm::translate(matrixAdjustLamp, glm::vec3(7.3, 13.0, 0.0));
 			glm::vec3 lampPosition = glm::vec3(matrixAdjustLamp[3]);
 			shaderMulLighting.setVectorFloat3("pointLights[" + std::to_string(i) + "].light.ambient", 
 				glm::value_ptr(glm::vec3(0.2, 0.16, 0.01)));
@@ -1052,14 +1053,14 @@ void applicationLoop() {
 				glm::value_ptr(lampPosition));
 			shaderTerrain.setFloat("pointLights[" + std::to_string(i) + "].constant", 1.0);
 			shaderTerrain.setFloat("pointLights[" + std::to_string(i) + "].linear", 0.09);
-			shaderTerrain.setFloat("pointLights[" + std::to_string(i) + "].quadratic", 0.02);
+			shaderTerrain.setFloat("pointLights[" + std::to_string(i) + "].quadratic", 0.01);
 		}
 		for (int i = 0; i < lamp2Position.size(); i++){
 			glm::mat4 matrixAdjustLamp = glm::mat4(1.0f);
 			matrixAdjustLamp = glm::translate(matrixAdjustLamp, lamp2Position[i]);
 			matrixAdjustLamp = glm::rotate(matrixAdjustLamp, glm::radians(lamp2Orientation[i]), glm::vec3(0, 1, 0));
-			matrixAdjustLamp = glm::scale(matrixAdjustLamp, glm::vec3(1.0, 1.0, 1.0));
-			matrixAdjustLamp = glm::translate(matrixAdjustLamp, glm::vec3(0.759521, 5.00174, 0));
+			matrixAdjustLamp = glm::scale(matrixAdjustLamp, glm::vec3(0.0000001, 0.0000001, 0.0000001));
+			matrixAdjustLamp = glm::translate(matrixAdjustLamp, glm::vec3(0.5, 5.0, 0.0));
 			glm::vec3 lampPosition = glm::vec3(matrixAdjustLamp[3]);
 			shaderMulLighting.setVectorFloat3("pointLights[" + std::to_string(lamp1Position.size() + i) + "].light.ambient", 
 				glm::value_ptr(glm::vec3(0.2, 0.16, 0.01)));
@@ -1070,8 +1071,8 @@ void applicationLoop() {
 			shaderMulLighting.setVectorFloat3("pointLights[" + std::to_string(lamp1Position.size() + i) + "].position", 
 				glm::value_ptr(lampPosition));
 			shaderMulLighting.setFloat("pointLights[" + std::to_string(lamp1Position.size() + i) + "].constant", 1.0);
-			shaderMulLighting.setFloat("pointLights[" + std::to_string(lamp1Position.size() + i) + "].linear", 0.09);
-			shaderMulLighting.setFloat("pointLights[" + std::to_string(lamp1Position.size() + i) + "].quadratic", 0.01);
+			shaderMulLighting.setFloat("pointLights[" + std::to_string(lamp1Position.size() + i) + "].linear", 0.0);
+			shaderMulLighting.setFloat("pointLights[" + std::to_string(lamp1Position.size() + i) + "].quadratic", 0.1);
 			
 			shaderTerrain.setVectorFloat3("pointLights[" + std::to_string(lamp1Position.size() + i) + "].light.ambient", 
 				glm::value_ptr(glm::vec3(0.2, 0.16, 0.01)));
@@ -1082,8 +1083,8 @@ void applicationLoop() {
 			shaderTerrain.setVectorFloat3("pointLights[" + std::to_string(lamp1Position.size() + i) + "].position", 
 				glm::value_ptr(lampPosition));
 			shaderTerrain.setFloat("pointLights[" + std::to_string(lamp1Position.size() + i) + "].constant", 1.0);
-			shaderTerrain.setFloat("pointLights[" + std::to_string(lamp1Position.size() + i) + "].linear", 0.09);
-			shaderTerrain.setFloat("pointLights[" + std::to_string(lamp1Position.size() + i) + "].quadratic", 0.02);
+			shaderTerrain.setFloat("pointLights[" + std::to_string(lamp1Position.size() + i) + "].linear", 0.0);
+			shaderTerrain.setFloat("pointLights[" + std::to_string(lamp1Position.size() + i) + "].quadratic", 0.1);
 		}
 
 		/*******************************************
