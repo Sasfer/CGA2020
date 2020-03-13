@@ -88,6 +88,9 @@ Model modelLampPost2;
 // Model animate instance
 // Mayow
 Model mayowModelAnimate;
+//Cowboy
+Model cowboyModelAnimate;
+
 // Terrain model instance
 Terrain terrain(-1, -1, 200, 8, "../Textures/heightmap.png");
 
@@ -121,10 +124,13 @@ glm::mat4 modelMatrixLambo = glm::mat4(1.0);
 glm::mat4 modelMatrixAircraft = glm::mat4(1.0);
 glm::mat4 modelMatrixDart = glm::mat4(1.0f);
 glm::mat4 modelMatrixMayow = glm::mat4(1.0f);
+glm::mat4 modelMatrixcowboy = glm::mat4(1.0f);
 
 int animationIndex = 1;
+int animationIndex2 = 2;
 float rotDartHead = 0.0, rotDartLeftArm = 0.0, rotDartLeftHand = 0.0, rotDartRightArm = 0.0, rotDartRightHand = 0.0, rotDartLeftLeg = 0.0, rotDartRightLeg = 0.0;
 int modelSelected = 2;
+int modelSelected2 = 3;
 bool enableCountSelected = true;
 
 // Variables to animations keyframes
@@ -303,6 +309,9 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	//Mayow
 	mayowModelAnimate.loadModel("../models/mayow/personaje2.fbx");
 	mayowModelAnimate.setShader(&shaderMulLighting);
+	//cowBoy
+	cowboyModelAnimate.loadModel("../models/cowboy/Character Running.fbx");
+	cowboyModelAnimate.setShader(&shaderMulLighting);
 
 	camera->setPosition(glm::vec3(0.0, 0.0, 10.0));
 	camera->setDistanceFromTarget(distanceFromTarget);
@@ -703,6 +712,7 @@ void destroy() {
 
 	// Custom objects animate
 	mayowModelAnimate.destroy();
+	cowboyModelAnimate.destroy();
 
 	// Textures Delete
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -779,12 +789,14 @@ bool processInput(bool continueApplication) {
 		camera->mouseMoveCamera(0.0, offsetY, deltaTime);
 	offsetX = 0;
 	offsetY = 0;
+	
+	camera->setAngleAroundTarget(0.0);
 
 	// Seleccionar modelo
 	if (enableCountSelected && glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS){
 		enableCountSelected = false;
 		modelSelected++;
-		if(modelSelected > 2)
+		if(modelSelected > 3)
 			modelSelected = 0;
 		if(modelSelected == 1)
 			fileName = "../animaciones/animation_dart_joints.txt";
@@ -885,6 +897,27 @@ bool processInput(bool continueApplication) {
 		animationIndex = 0;
 	}
 
+
+	// Mayow animate model movements
+	if (modelSelected == 3 && glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+		modelMatrixcowboy = glm::rotate(modelMatrixcowboy, glm::radians(1.0f), glm::vec3(0, 1, 0));
+		animationIndex = 0;
+	}
+	else if (modelSelected == 3 && glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+		modelMatrixcowboy = glm::rotate(modelMatrixcowboy, glm::radians(-1.0f), glm::vec3(0, 1, 0));
+		animationIndex = 0;
+	}if (modelSelected == 3 && glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+		modelMatrixcowboy = glm::translate(modelMatrixcowboy, glm::vec3(0, 0, 0.02));
+		animationIndex = 0;
+	}
+	else if (modelSelected == 3 && glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+		modelMatrixcowboy = glm::translate(modelMatrixcowboy, glm::vec3(0, 0, -0.02));
+		animationIndex= 0;
+	}
+
+
+
+
 	glfwPollEvents();
 	return continueApplication;
 }
@@ -910,13 +943,15 @@ void applicationLoop() {
 	modelMatrixMayow = glm::translate(modelMatrixMayow, glm::vec3(13.0f, 0.05f, -5.0f));
 	modelMatrixMayow = glm::rotate(modelMatrixMayow, glm::radians(-90.0f), glm::vec3(0, 1, 0));
 
+	modelMatrixcowboy = glm::translate(modelMatrixcowboy, glm::vec3(15.0f,0.0f,-6.0f));
+	modelMatrixcowboy = glm::rotate(modelMatrixcowboy, glm::radians(-90.0f), glm::vec3(0, 1, 0));
+
 	// Variables to interpolation key frames
 	fileName = "../animaciones/animation_dart_joints.txt";
 	keyFramesDartJoints = getKeyRotFrames(fileName);
 	keyFramesDart = getKeyFrames("../animaciones/animation_dart.txt");
 
 	lastTime = TimeManager::Instance().GetTime();
-
 	while (psi) {
 		currTime = TimeManager::Instance().GetTime();
 		if(currTime - lastTime < 0.016666667){
@@ -941,11 +976,17 @@ void applicationLoop() {
 			angleTarget = glm::angle(glm::quat_cast(modelMatrixDart));
 			target = modelMatrixDart[3];
 		}
-		else{
+		else if (modelSelected == 2) {
 			axis = glm::axis(glm::quat_cast(modelMatrixMayow));
 			angleTarget = glm::angle(glm::quat_cast(modelMatrixMayow));
 			target = modelMatrixMayow[3];
 		}
+		else if (modelSelected == 3) {
+			axis = glm::axis(glm::quat_cast(modelMatrixcowboy));
+			angleTarget = glm::angle(glm::quat_cast(modelMatrixcowboy));
+			target = modelMatrixcowboy[3];
+		}
+		
 
 		if(std::isnan(angleTarget))
 			angleTarget = 0.0;
@@ -1220,6 +1261,12 @@ void applicationLoop() {
 		modelMatrixMayowBody = glm::scale(modelMatrixMayowBody, glm::vec3(0.021, 0.021, 0.021));
 		mayowModelAnimate.setAnimationIndex(animationIndex);
 		mayowModelAnimate.render(modelMatrixMayowBody);
+
+		modelMatrixcowboy[3][1] = terrain.getHeightTerrain(modelMatrixcowboy[3][0], modelMatrixcowboy[3][2]);
+		glm::mat4 modelMatrixCowBoyBody = glm::mat4(modelMatrixcowboy);
+		modelMatrixCowBoyBody = glm::scale(modelMatrixCowBoyBody, glm::vec3(0.0021, 0.0021, 0.0021));
+		cowboyModelAnimate.render(modelMatrixCowBoyBody);
+		
 
 		/*******************************************
 		 * Skybox
