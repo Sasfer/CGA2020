@@ -804,6 +804,7 @@ bool processInput(bool continueApplication) {
 	offsetY = 0;
 	
 	camera->setAngleAroundTarget(0.0);
+	camera->setPitch(0.0);
 
 	// Seleccionar modelo
 	if (enableCountSelected && glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS){

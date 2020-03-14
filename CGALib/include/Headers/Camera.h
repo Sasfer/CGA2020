@@ -111,6 +111,11 @@ public:
 		this->angleAroundTarget = angle;
 	}
 
+	void setPitch(float pitch) {
+		this->pitch = pitch;
+
+	}
+
 protected:
 	glm::vec3 position;
 	glm::vec3 front;
