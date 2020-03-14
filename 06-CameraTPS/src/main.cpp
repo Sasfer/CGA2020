@@ -90,6 +90,8 @@ Model modelLampPost2;
 Model mayowModelAnimate;
 //Cowboy
 Model cowboyModelAnimate;
+//walking
+Model walModelAnimate;
 
 // Terrain model instance
 Terrain terrain(-1, -1, 200, 8, "../Textures/heightmap.png");
@@ -125,9 +127,9 @@ glm::mat4 modelMatrixAircraft = glm::mat4(1.0);
 glm::mat4 modelMatrixDart = glm::mat4(1.0f);
 glm::mat4 modelMatrixMayow = glm::mat4(1.0f);
 glm::mat4 modelMatrixcowboy = glm::mat4(1.0f);
+glm::mat4 modelMatrixwal = glm::mat4(1.0f);
 
 int animationIndex = 1;
-int animationIndex2 = 2;
 float rotDartHead = 0.0, rotDartLeftArm = 0.0, rotDartLeftHand = 0.0, rotDartRightArm = 0.0, rotDartRightHand = 0.0, rotDartLeftLeg = 0.0, rotDartRightLeg = 0.0;
 int modelSelected = 2;
 int modelSelected2 = 3;
@@ -160,16 +162,23 @@ float rotHelHelY = 0.0;
 int stateDoor = 0;
 float dorRotCount = 0.0;
 
-// Lamps positions
-std::vector<glm::vec3> lamp1Position = { glm::vec3(-7.03, 0, -19.14), glm::vec3(
-		24.41, 0, -34.57), glm::vec3(-10.15, 0, -54.10) };
-std::vector<float> lamp1Orientation = { -17.0, -82.67, 23.70 };
-std::vector<glm::vec3> lamp2Position = { glm::vec3(-36.52, 0, -23.24),
-		glm::vec3(-52.73, 0, -3.90) };
-std::vector<float> lamp2Orientation = {21.37 + 90, -65.0 + 90};
+
 
 double deltaTime;
 double currTime, lastTime;
+
+// Lamps positions
+// Forma sofisticada para manejar un arreglo dinámico
+// Se define la posición y orientación hacia el eje Y en radianes 
+// de las lamparas tipo "lamp1" y "lamp2", respectivamente
+std::vector<glm::vec3> lamp1Position = { glm::vec3(5.66, 0, 43.16), glm::vec3(25.66, 0, 53.16),
+										 glm::vec3(-14.34, 0, 63.16), glm::vec3(12.0, 0.0, 2.0) };
+std::vector<float> lamp1Orientation = { -90.0, 90.0, 90.0, 45.0 };
+
+std::vector<glm::vec3> lamp2Position = { glm::vec3(-12.0 , 0.0, -2.0),glm::vec3(-15.0, 0, 45.0),
+										 glm::vec3(-60.0, 0, 65.0) , glm::vec3(-45.0, 0, 32.0),
+										 glm::vec3(-82.0, 0, 22.0) };
+std::vector<float> lamp2Orientation = { 0.0, 0.0, 0.0, 0.0, 0.0 };
 
 // Se definen todos las funciones.
 void reshapeCallback(GLFWwindow *Window, int widthRes, int heightRes);
@@ -280,7 +289,7 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 
 	// Dart Lego
 	modelDartLegoBody.loadModel("../models/LegoDart/LeoDart_body.obj");
-	modelDartLegoBody.setShader(&shaderMulLighting);
+	modelDartLegoBody.setShader(	&shaderMulLighting);
 	modelDartLegoMask.loadModel("../models/LegoDart/LeoDart_mask.obj");
 	modelDartLegoMask.setShader(&shaderMulLighting);
 	modelDartLegoHead.loadModel("../models/LegoDart/LeoDart_head.obj");
@@ -299,19 +308,22 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	modelDartLegoRightLeg.setShader(&shaderMulLighting);
 
 	//Lamp models
-	modelLamp1.loadModel("../models/Street-Lamp-Black/objLamp.obj");
+	modelLamp1.loadModel("../models/Street-Lamp-Black/Lampara1.obj");
 	modelLamp1.setShader(&shaderMulLighting);
-	modelLamp2.loadModel("../models/Street_Light/Lamp.obj");
+	modelLamp2.loadModel("../models/Street-Lamp-Black/Lampara2.obj");
 	modelLamp2.setShader(&shaderMulLighting);
 	modelLampPost2.loadModel("../models/Street_Light/LampPost.obj");
 	modelLampPost2.setShader(&shaderMulLighting);
-
 	//Mayow
 	mayowModelAnimate.loadModel("../models/mayow/personaje2.fbx");
 	mayowModelAnimate.setShader(&shaderMulLighting);
 	//cowBoy
 	cowboyModelAnimate.loadModel("../models/cowboy/Character Running.fbx");
 	cowboyModelAnimate.setShader(&shaderMulLighting);
+
+	//walking
+	walModelAnimate.loadModel("../models/mixamo/Claire");
+	walModelAnimate.setShader(&shaderMulLighting);
 
 	camera->setPosition(glm::vec3(0.0, 0.0, 10.0));
 	camera->setDistanceFromTarget(distanceFromTarget);
@@ -507,7 +519,7 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	textureLandingPad.freeImage(bitmap);
 
 	// Definiendo la textura a utilizar
-	Texture textureTerrainBackground("../Textures/grassy2.png");
+	Texture textureTerrainBackground("../Textures/arena.png");
 	// Carga el mapa de bits (FIBITMAP es el tipo de dato de la libreria)
 	bitmap = textureTerrainBackground.loadImage();
 	// Convertimos el mapa de bits en un arreglo unidimensional de tipo unsigned char
@@ -539,7 +551,7 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	textureTerrainBackground.freeImage(bitmap);
 
 	// Definiendo la textura a utilizar
-	Texture textureTerrainR("../Textures/mud.png");
+	Texture textureTerrainR("../Textures/piedras.png");
 	// Carga el mapa de bits (FIBITMAP es el tipo de dato de la libreria)
 	bitmap = textureTerrainR.loadImage();
 	// Convertimos el mapa de bits en un arreglo unidimensional de tipo unsigned char
@@ -571,7 +583,7 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	textureTerrainR.freeImage(bitmap);
 
 	// Definiendo la textura a utilizar
-	Texture textureTerrainG("../Textures/grassFlowers.png");
+	Texture textureTerrainG("../Textures/musgo.png");
 	// Carga el mapa de bits (FIBITMAP es el tipo de dato de la libreria)
 	bitmap = textureTerrainG.loadImage();
 	// Convertimos el mapa de bits en un arreglo unidimensional de tipo unsigned char
@@ -603,7 +615,7 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	textureTerrainG.freeImage(bitmap);
 
 	// Definiendo la textura a utilizar
-	Texture textureTerrainB("../Textures/path.png");
+	Texture textureTerrainB("../Textures/agua.png");
 	// Carga el mapa de bits (FIBITMAP es el tipo de dato de la libreria)
 	bitmap = textureTerrainB.loadImage();
 	// Convertimos el mapa de bits en un arreglo unidimensional de tipo unsigned char
@@ -713,6 +725,7 @@ void destroy() {
 	// Custom objects animate
 	mayowModelAnimate.destroy();
 	cowboyModelAnimate.destroy();
+	walModelAnimate.destroy();
 
 	// Textures Delete
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -915,7 +928,7 @@ bool processInput(bool continueApplication) {
 		animationIndex= 0;
 	}
 
-
+	
 
 
 	glfwPollEvents();
@@ -945,6 +958,9 @@ void applicationLoop() {
 
 	modelMatrixcowboy = glm::translate(modelMatrixcowboy, glm::vec3(15.0f,0.0f,-6.0f));
 	modelMatrixcowboy = glm::rotate(modelMatrixcowboy, glm::radians(-90.0f), glm::vec3(0, 1, 0));
+
+	modelMatrixwal = glm::translate(modelMatrixwal, glm::vec3(16.0f, 0.0f, -4.0f));
+	modelMatrixwal = glm::rotate(modelMatrixwal, glm::radians(-90.0f), glm::vec3(0, 1, 0));
 
 	// Variables to interpolation key frames
 	fileName = "../animaciones/animation_dart_joints.txt";
@@ -1266,6 +1282,11 @@ void applicationLoop() {
 		glm::mat4 modelMatrixCowBoyBody = glm::mat4(modelMatrixcowboy);
 		modelMatrixCowBoyBody = glm::scale(modelMatrixCowBoyBody, glm::vec3(0.0021, 0.0021, 0.0021));
 		cowboyModelAnimate.render(modelMatrixCowBoyBody);
+		
+		modelMatrixwal[3][1] = terrain.getHeightTerrain(modelMatrixwal[3][0], modelMatrixwal[3][2]);
+		glm::mat4 modelMatrixWalBody = glm::mat4(modelMatrixwal);
+		modelMatrixWalBody = glm::scale(modelMatrixWalBody, glm::vec3(0.0022, 0.0022, 0.0022));
+		walModelAnimate.render(modelMatrixWalBody);
 		
 
 		/*******************************************
