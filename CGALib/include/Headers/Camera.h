@@ -93,12 +93,15 @@ public:
 		this->cameraTarget = cameraTarget;
 		this->updateCamera();
 	}
+
 	glm::vec3 getCameraTarget() {
 		return this->cameraTarget;
 	}
+
 	void setAngleTarget(float angleTarget) {
 		this->angleTarget = angleTarget;
 	}
+
 	float getAngleTarget() {
 		return this->angleTarget;
 	}
