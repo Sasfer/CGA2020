@@ -858,6 +858,7 @@ bool processInput(bool continueApplication) {
 			fileName = "../animaciones/animation_dart.txt";
 		std::cout << "modelSelected:" << modelSelected << std::endl;
 	}
+
 	else if (glfwGetKey(window, GLFW_KEY_TAB) == GLFW_RELEASE)
 		enableCountSelected = true;
 
@@ -969,6 +970,24 @@ bool processInput(bool continueApplication) {
 		modelMatrixPirata = glm::translate(modelMatrixPirata, glm::vec3(0, 0, -0.02));
 		animationIndex = 2;
 	}
+
+	// Cowboy animate model movements
+	if (modelSelected == 3 && glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+		modelMatrixCowboy = glm::rotate(modelMatrixCowboy, glm::radians(1.0f), glm::vec3(0, 1, 0));
+		animationIndex = 0;
+	}
+	else if (modelSelected == 3 && glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+		modelMatrixCowboy = glm::rotate(modelMatrixCowboy, glm::radians(-1.0f), glm::vec3(0, 1, 0));
+		animationIndex = 0;
+	}if (modelSelected == 3 && glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+		modelMatrixCowboy = glm::translate(modelMatrixCowboy, glm::vec3(0, 0, 0.02));
+		animationIndex = 0;
+	}
+	else if (modelSelected == 3 && glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+		modelMatrixCowboy = glm::translate(modelMatrixCowboy, glm::vec3(0, 0, -0.02));
+		animationIndex = 0;
+	}
+
 	glfwPollEvents();
 	return continueApplication;
 }
