@@ -6,6 +6,7 @@
 //std includes
 #include <string>
 #include <iostream>
+#include <vector>
 
 //glfw include
 #include <GLFW/glfw3.h>
@@ -54,7 +55,16 @@ Shader shaderMulLighting;
 //Shader para el terreno
 Shader shaderTerrain;
 
+//Variable that tells which camera is active, it's an index
+int activeCamera = 0;
+
 std::shared_ptr<Camera> camera(new ThirdPersonCamera());
+std::shared_ptr<Camera> FPCamera(new FirstPersonCamera());
+
+/*Array or list that contains the cameras, it's a sahred_ptr<Camera vector>,
+shared_ptr is an smart pointer or sahered pointer towards camera class object*/
+std::vector<std::shared_ptr<Camera>> cameraVector = { camera,FPCamera };
+
 float distanceFromTarget = 7.0;
 float pitchMove = 0.0;
 
@@ -335,9 +345,10 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	pirataModelAnimate.loadModel("../models/mixamo/pirata.fbx");
 	pirataModelAnimate.setShader(&shaderMulLighting);
 
-	camera->setPosition(glm::vec3(0.0, 0.0, 10.0));
-	camera->setDistanceFromTarget(distanceFromTarget);
-	camera->setSensitivity(1.0);
+	activeCamera = 0;
+	cameraVector[activeCamera]->setPosition(glm::vec3(0.0, 0.0, 10.0));
+	cameraVector[activeCamera]->setDistanceFromTarget(distanceFromTarget);
+	cameraVector[activeCamera]->setSensitivity(1.0);
 
 	// Definimos el tamanio de la imagen
 	int imageWidth, imageHeight;
@@ -793,7 +804,7 @@ void mouseCallback(GLFWwindow *window, double xpos, double ypos) {
 
 void scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
 	distanceFromTarget -= yoffset;
-	camera->setDistanceFromTarget(distanceFromTarget);
+	cameraVector[activeCamera]->setDistanceFromTarget(distanceFromTarget);
 }
 
 void mouseButtonCallback(GLFWwindow *window, int button, int state, int mod) {
@@ -817,11 +828,18 @@ bool processInput(bool continueApplication) {
 	if (exitApp || glfwWindowShouldClose(window) != 0) {
 		return false;
 	}
+	
+	if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
+		activeCamera++;
+		if (activeCamera > cameraVector.size() - 1)
+			activeCamera = 0;
+	}
+	
 
 	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
-		camera->mouseMoveCamera(offsetX, 0.0, deltaTime);
+		cameraVector[activeCamera]->mouseMoveCamera(offsetX, 0.0, deltaTime);
 	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
-		camera->mouseMoveCamera(0.0, offsetY, deltaTime);
+		cameraVector[activeCamera]->mouseMoveCamera(0.0, offsetY, deltaTime);
 	offsetX = 0;
 	offsetY = 0;
 
@@ -830,13 +848,14 @@ bool processInput(bool continueApplication) {
 	if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS){
 		if (pitchMove < 1.0) {
 			pitchMove += 0.01;
-			camera->setPitch(pitchMove);
+			
+			cameraVector[activeCamera]->setPitch(pitchMove);
 		}
 	}
 	else if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
 		if (pitchMove > 0.0) {
 			pitchMove -= 0.01;
-			camera->setPitch(pitchMove);
+			cameraVector[activeCamera]->setPitch(pitchMove);
 		}
 	}
 
@@ -844,11 +863,11 @@ bool processInput(bool continueApplication) {
 	if (enableCountSelected && glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS) {
 		enableCountSelected = false;
 		modelSelected++;
-		camera->setAngleAroundTarget(0.0);
-		camera->setPitch(0.0);
+		cameraVector[activeCamera]->setAngleAroundTarget(0.0);
+		cameraVector[activeCamera]->setPitch(0.0);
 		// Se requeria un valor 0, pero por fines prácticos y visuales 
 		// específica un valor razonable
-		camera->setDistanceFromTarget(5.0);
+		cameraVector[activeCamera]->setDistanceFromTarget(5.0);
 
 		if (modelSelected > 4)
 			modelSelected = 0;
@@ -988,6 +1007,8 @@ bool processInput(bool continueApplication) {
 		animationIndex = 0;
 	}
 
+
+
 	glfwPollEvents();
 	return continueApplication;
 }
@@ -1044,26 +1065,33 @@ void applicationLoop() {
 
 		glm::mat4 projection = glm::perspective(glm::radians(45.0f),
 			(float)screenWidth / (float)screenHeight, 0.01f, 100.0f);
+		
+		//Variable to adjust the FPC according to the selected model
+		glm::vec3 adjustment;
 
 		if (modelSelected == 0 or modelSelected == 1) {
 			axis = glm::axis(glm::quat_cast(modelMatrixDart));
 			angleTarget = glm::angle(glm::quat_cast(modelMatrixDart));
 			target = modelMatrixDart[3];
+			adjustment = glm::vec3(0.0f, 2.1f, 0.0f);
 		}
 		else if (modelSelected == 2) {
 			axis = glm::axis(glm::quat_cast(modelMatrixMayow));
 			angleTarget = glm::angle(glm::quat_cast(modelMatrixMayow));
 			target = modelMatrixMayow[3];
+			adjustment = glm::vec3(-0.5f, 1.5f, 0.0f);
 		}
 		else if (modelSelected == 3) {
 			axis = glm::axis(glm::quat_cast(modelMatrixCowboy));
 			angleTarget = glm::angle(glm::quat_cast(modelMatrixCowboy));
 			target = modelMatrixCowboy[3];
+			adjustment = glm::vec3(-0.6f, 1.6f, 0.0f);
 		}
 		else {
 			axis = glm::axis(glm::quat_cast(modelMatrixPirata));
 			angleTarget = glm::angle(glm::quat_cast(modelMatrixPirata));
 			target = modelMatrixPirata[3];
+			adjustment = glm::vec3(-0.6f, 1.8f, 0.0f);
 		}
 
 		if (std::isnan(angleTarget))
@@ -1072,10 +1100,12 @@ void applicationLoop() {
 			angleTarget = -angleTarget;
 		if (modelSelected == 1)
 			angleTarget -= glm::radians(90.0f);
-		camera->setCameraTarget(target);
-		camera->setAngleTarget(angleTarget);
-		camera->updateCamera();
-		view = camera->getViewMatrix();
+
+		cameraVector[activeCamera]->setPosition(target + adjustment);
+		cameraVector[activeCamera]->setCameraTarget(target);
+		cameraVector[activeCamera]->setAngleTarget(angleTarget);
+		cameraVector[activeCamera]->updateCamera();
+		view = cameraVector[activeCamera]->getViewMatrix();
 
 		// Settea la matriz de vista y projection al shader con solo color
 		shader.setMatrix4("projection", 1, false, glm::value_ptr(projection));
@@ -1104,7 +1134,7 @@ void applicationLoop() {
 		 * Propiedades Luz direccional
 		 *******************************************/
 		 // Se le envia la posición del obsevador, se obtiene el valor de la camara
-		shaderMulLighting.setVectorFloat3("viewPos", glm::value_ptr(camera->getPosition()));
+		shaderMulLighting.setVectorFloat3("viewPos", glm::value_ptr(cameraVector[activeCamera]->getPosition()));
 		// Se hace referencia a la variable de ambient, se ponenen constantes vacias para que se puedan ver
 		shaderMulLighting.setVectorFloat3("directionalLight.light.ambient", glm::value_ptr(glm::vec3(0.1, 0.1, 0.1)));
 		// Vemos el color que se refleja
@@ -1118,7 +1148,7 @@ void applicationLoop() {
 		 * Propiedades Luz direccional Terrain
 		 *******************************************/
 		 // Para que se vea más de día, hay que aumentar los valores de ambient
-		shaderTerrain.setVectorFloat3("viewPos", glm::value_ptr(camera->getPosition()));
+		shaderTerrain.setVectorFloat3("viewPos", glm::value_ptr(cameraVector[activeCamera]->getPosition()));
 		shaderTerrain.setVectorFloat3("directionalLight.light.ambient", glm::value_ptr(glm::vec3(0.1, 0.1, 0.1)));
 		shaderTerrain.setVectorFloat3("directionalLight.light.diffuse", glm::value_ptr(glm::vec3(0.0, 0.0, 0.5)));
 		shaderTerrain.setVectorFloat3("directionalLight.light.specular", glm::value_ptr(glm::vec3(0.0, 0.0, 0.8)));
