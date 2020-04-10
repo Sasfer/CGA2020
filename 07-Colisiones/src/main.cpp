@@ -93,6 +93,11 @@ Model modelLampPost2;
 // Model animate instance
 // Mayow
 Model mayowModelAnimate;
+
+// Cowboy
+Model modelAnimateCowboy;
+// Rojo
+Model rojoModel;
 //Model nanosuitModel;
 Model nanosuitModel;
 // Terrain model instance
@@ -128,7 +133,12 @@ glm::mat4 modelMatrixLambo = glm::mat4(1.0);
 glm::mat4 modelMatrixAircraft = glm::mat4(1.0);
 glm::mat4 modelMatrixDart = glm::mat4(1.0f);
 glm::mat4 modelMatrixMayow = glm::mat4(1.0f);
+glm::mat4 modelMatrixRojo = glm::mat4(1.0f);
 glm::mat4 modelMatrixNanosuit = glm::mat4(1.0f);
+glm::mat4 modelMatrixCowboy = glm::mat4(1.0f);
+
+
+
 int animationIndex = 1;
 float rotDartHead = 0.0, rotDartLeftArm = 0.0, rotDartLeftHand = 0.0, rotDartRightArm = 0.0, rotDartRightHand = 0.0, rotDartLeftLeg = 0.0, rotDartRightLeg = 0.0;
 int modelSelected = 2;
@@ -322,6 +332,15 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	//Mayow
 	mayowModelAnimate.loadModel("../models/mayow/personaje2.fbx");
 	mayowModelAnimate.setShader(&shaderMulLighting);
+
+
+	// Cowboy
+	modelAnimateCowboy.loadModel("../models/cowboy/Character Running.fbx");
+	modelAnimateCowboy.setShader(&shaderMulLighting);
+
+	//Rojo
+	rojoModel.loadModel("../models/rojo/rojoAnimado2.fbx");
+	rojoModel.setShader(&shaderMulLighting);
 
 
 	//Nanosuit 
@@ -727,8 +746,13 @@ void destroy() {
 	modelLampPost2.destroy();
 	nanosuitModel.destroy();
 
+
 	// Custom objects animate
 	mayowModelAnimate.destroy();
+	modelAnimateCowboy.destroy();
+
+	//Rojo
+	rojoModel.destroy();
 
 	// Textures Delete
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -810,7 +834,7 @@ bool processInput(bool continueApplication) {
 	if (enableCountSelected && glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS){
 		enableCountSelected = false;
 		modelSelected++;
-		if(modelSelected > 2)
+		if(modelSelected > 3)
 			modelSelected = 0;
 		if(modelSelected == 1)
 			fileName = "../animaciones/animation_dart_joints.txt";
@@ -910,6 +934,26 @@ bool processInput(bool continueApplication) {
 		animationIndex = 0;
 	}
 
+
+	// Cowboy animate model movements
+	if (modelSelected == 3 && glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+		modelMatrixCowboy = glm::rotate(modelMatrixCowboy, glm::radians(1.0f), glm::vec3(0, 1, 0));
+		animationIndex = 0;
+	}
+	else if (modelSelected == 3 && glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+		modelMatrixCowboy = glm::rotate(modelMatrixCowboy, glm::radians(-1.0f), glm::vec3(0, 1, 0));
+		animationIndex = 0;
+	}if (modelSelected == 3 && glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+		modelMatrixCowboy = glm::translate(modelMatrixCowboy, glm::vec3(0, 0, 0.02));
+		animationIndex = 0;
+	}
+	else if (modelSelected == 3 && glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+		modelMatrixCowboy = glm::translate(modelMatrixCowboy, glm::vec3(0, 0, -0.02));
+		animationIndex = 0;
+	}
+
+
+
 	glfwPollEvents();
 	return continueApplication;
 }
@@ -935,7 +979,18 @@ void applicationLoop() {
 	modelMatrixMayow = glm::translate(modelMatrixMayow, glm::vec3(13.0f, 0.05f, -5.0f));
 	modelMatrixMayow = glm::rotate(modelMatrixMayow, glm::radians(-90.0f), glm::vec3(0, 1, 0));
 
-	modelMatrixNanosuit = glm::translate(modelMatrixNanosuit, glm::vec3(13.0f, 0.0f, 10.0f));
+
+
+	modelMatrixCowboy = glm::translate(modelMatrixCowboy, glm::vec3(-6.0f, 0.05f, -10.0f));
+	modelMatrixCowboy = glm::rotate(modelMatrixCowboy, glm::radians(-90.0f), glm::vec3(0, 1, 0));
+
+	modelMatrixNanosuit = glm::translate(modelMatrixNanosuit, glm::vec3(13.0f, 1.0f, 10.0f));
+
+	modelMatrixRojo = glm::translate(modelMatrixRojo, glm::vec3(13.0f,1.0f,-7.0f));
+;
+
+
+
 
 	// Variables to interpolation key frames
 	fileName = "../animaciones/animation_dart_joints.txt";
@@ -965,16 +1020,22 @@ void applicationLoop() {
 
 		glm::mat4 projection = glm::perspective(glm::radians(45.0f),
 				(float) screenWidth / (float) screenHeight, 0.01f, 100.0f);
-
+	
 		if(modelSelected == 1){
 			axis = glm::axis(glm::quat_cast(modelMatrixDart));
 			angleTarget = glm::angle(glm::quat_cast(modelMatrixDart));
 			target = modelMatrixDart[3];
 		}
-		else{
+		else if(modelSelected==2){
 			axis = glm::axis(glm::quat_cast(modelMatrixMayow));
 			angleTarget = glm::angle(glm::quat_cast(modelMatrixMayow));
 			target = modelMatrixMayow[3];
+		}
+		else if (modelSelected == 3) {
+			axis = glm::axis(glm::quat_cast(modelMatrixCowboy));
+			angleTarget = glm::angle(glm::quat_cast(modelMatrixCowboy));
+			target = modelMatrixCowboy[3];
+			
 		}
 
 		if(std::isnan(angleTarget))
@@ -1201,6 +1262,13 @@ void applicationLoop() {
 		glm::mat4 modelMatrixNanosuitBody = glm::mat4(modelMatrixNanosuit);
 		modelMatrixNanosuitBody = glm::scale(modelMatrixNanosuitBody, glm::vec3(0.15, 0.15, 0.15));// mas chico 
 		nanosuitModel.render(modelMatrixNanosuitBody);
+
+		modelMatrixRojo[3][1] = terrain.getHeightTerrain(modelMatrixRojo[3][0], modelMatrixRojo[3][2]);
+		glm::mat4 modelMatrixRojoBody = glm::mat4(modelMatrixRojo);
+		modelMatrixRojoBody = glm::scale(modelMatrixRojoBody, glm::vec3(0.0015, 0.0015, 0.0015));// mas chico 
+		rojoModel.render(modelMatrixRojoBody);
+
+
 		// Dart lego
 		// Se deshabilita el cull faces IMPORTANTE para la capa
 		glDisable(GL_CULL_FACE);
@@ -1261,6 +1329,14 @@ void applicationLoop() {
 		modelMatrixMayowBody = glm::scale(modelMatrixMayowBody, glm::vec3(0.021, 0.021, 0.021));
 		mayowModelAnimate.setAnimationIndex(animationIndex);
 		mayowModelAnimate.render(modelMatrixMayowBody);
+
+		modelMatrixCowboy[3][1] = terrain.getHeightTerrain(modelMatrixCowboy[3][0], modelMatrixCowboy[3][2]);
+		glm::mat4 modelMatrixCowboyBody = glm::mat4(modelMatrixCowboy);
+		modelMatrixCowboyBody = glm::scale(modelMatrixCowboyBody, glm::vec3(0.003, 0.003, 0.003));
+		modelAnimateCowboy.setAnimationIndex(0);
+		modelAnimateCowboy.render(modelMatrixCowboyBody);
+
+	
 
 		/*******************************************
 		 * Skybox
@@ -1364,6 +1440,17 @@ void applicationLoop() {
 		// EL ULTIMO VALOR SE PASA PARA QUE NO AVANCE MAS  Y SE REINICIE
 		addOrUpdateColliders(collidersSBB, "nanosuit", nanosuitCollider, modelMatrixNanosuit);
 
+		//Agregando caja de colisión. 
+		//colider del nanosuit en esfera, aplicamos mismas transformaciones
+		AbstractModel::SBB rojoCollider; //Declaracion del objeto
+		glm::mat4 modelMatrixColliderRojo = glm::mat4(modelMatrixRojo);
+		modelMatrixColliderRojo = glm::scale(modelMatrixColliderRojo, glm::vec3(0.0015, 0.0015, 0.0015));
+		//centro de la esfera envolvente
+		modelMatrixColliderRojo = glm::translate(modelMatrixColliderRojo,rojoModel.getSbb().c);
+		rojoCollider.c = glm::vec3(modelMatrixColliderRojo[3]);//splo donde esta el centro de la matriz
+		rojoCollider.ratio = rojoModel.getSbb().ratio*0.0075;
+		// EL ULTIMO VALOR SE PASA PARA QUE NO AVANCE MAS  Y SE REINICIE
+		addOrUpdateColliders(collidersSBB, "rojo", rojoCollider, modelMatrixRojo);
 
 		// Collider de mayow
 		AbstractModel::OBB mayowCollider;
@@ -1380,6 +1467,27 @@ void applicationLoop() {
 		mayowCollider.e = mayowModelAnimate.getObb().e * glm::vec3(0.021, 0.021, 0.021) * glm::vec3(0.787401574, 0.787401574, 0.787401574);
 		mayowCollider.c = glm::vec3(modelmatrixColliderMayow[3]);
 		addOrUpdateColliders(collidersOBB, "mayow", mayowCollider, modelMatrixMayow);
+
+
+		// Collider de cowboy
+		AbstractModel::OBB cowBoyCollider;
+		glm::mat4 modelmatrixColliderCowBoy = glm::mat4(modelMatrixCowboy);
+		modelmatrixColliderCowBoy = glm::rotate(modelmatrixColliderCowBoy,
+			glm::radians(-90.0f), glm::vec3(1, 0, 0));
+		// Set the orientation of collider before doing the scale
+		cowBoyCollider.u = glm::quat_cast(modelmatrixColliderCowBoy);
+		modelmatrixColliderCowBoy = glm::scale(modelmatrixColliderCowBoy, glm::vec3(0.4, 0.4, 0.4)* glm::vec3(0.787401574, 0.787401574, 0.787401574));
+		modelmatrixColliderCowBoy = glm::translate(modelmatrixColliderCowBoy,
+			glm::vec3(modelAnimateCowboy.getObb().c.x,
+				modelAnimateCowboy.getObb().c.y,
+				modelAnimateCowboy.getObb().c.z));
+		cowBoyCollider.e = modelAnimateCowboy.getObb().e * glm::vec3(0.4, 0.4, 0.4);
+		cowBoyCollider.c = glm::vec3(modelmatrixColliderCowBoy[3]);
+		addOrUpdateColliders(collidersOBB, "cowBoy", cowBoyCollider, modelMatrixCowboy);
+
+
+		
+
 
 		/*******************************************
 		 * Render de colliders
