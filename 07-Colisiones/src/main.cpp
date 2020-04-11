@@ -57,8 +57,18 @@ Shader shaderMulLighting;
 //Shader para el terreno
 Shader shaderTerrain;
 
+//Variable that tells which camera is active, it's an index
+int activeCamera = 0;
+
 std::shared_ptr<Camera> camera(new ThirdPersonCamera());
+std::shared_ptr<Camera> FPCamera(new FirstPersonCamera());
+
+/*Array or list that contains the cameras, it's a sahred_ptr<Camera vector>,
+shared_ptr is an smart pointer or sahered pointer towards camera class object*/
+std::vector<std::shared_ptr<Camera>> cameraVector = { camera,FPCamera };
+
 float distanceFromTarget = 7.0;
+float pitchMove = 0.0;
 
 Sphere skyboxSphere(20, 20);
 Box boxCollider;
@@ -93,13 +103,13 @@ Model modelLampPost2;
 // Model animate instance
 // Mayow
 Model mayowModelAnimate;
-
 // Cowboy
-Model modelAnimateCowboy;
-// Rojo
-Model rojoModel;
-//Model nanosuitModel;
-Model nanosuitModel;
+Model cowboyModelAnimate;
+// Pirata
+Model pirataModelAnimate;
+//	Nanosuit;
+Model nanosuitModelAnimate;
+
 // Terrain model instance
 Terrain terrain(-1, -1, 200, 8, "../Textures/heightmap.png");
 
@@ -133,11 +143,9 @@ glm::mat4 modelMatrixLambo = glm::mat4(1.0);
 glm::mat4 modelMatrixAircraft = glm::mat4(1.0);
 glm::mat4 modelMatrixDart = glm::mat4(1.0f);
 glm::mat4 modelMatrixMayow = glm::mat4(1.0f);
-glm::mat4 modelMatrixRojo = glm::mat4(1.0f);
 glm::mat4 modelMatrixNanosuit = glm::mat4(1.0f);
 glm::mat4 modelMatrixCowboy = glm::mat4(1.0f);
-
-
+glm::mat4 modelMatrixPirata = glm::mat4(1.0f);
 
 int animationIndex = 1;
 float rotDartHead = 0.0, rotDartLeftArm = 0.0, rotDartLeftHand = 0.0, rotDartRightArm = 0.0, rotDartRightHand = 0.0, rotDartLeftLeg = 0.0, rotDartRightLeg = 0.0;
@@ -333,22 +341,24 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	mayowModelAnimate.loadModel("../models/mayow/personaje2.fbx");
 	mayowModelAnimate.setShader(&shaderMulLighting);
 
-
 	// Cowboy
-	modelAnimateCowboy.loadModel("../models/cowboy/Character Running.fbx");
-	modelAnimateCowboy.setShader(&shaderMulLighting);
+	cowboyModelAnimate.loadModel("../models/cowboy/Character Running.fbx");
+	cowboyModelAnimate.setShader(&shaderMulLighting);
 
-	//Rojo
-	rojoModel.loadModel("../models/rojo/rojoAnimado2.fbx");
-	rojoModel.setShader(&shaderMulLighting);
+	// Pirata
+	//Orden de animaciones 0 Idle   1 Nada   2 Walking
+	pirataModelAnimate.loadModel("../models/mixamo/pirata.fbx");
+	pirataModelAnimate.setShader(&shaderMulLighting);
 
+	// Nanosuit 
+	nanosuitModelAnimate.loadModel("../models/nanosuit/nanosuit.obj");
+	nanosuitModelAnimate.setShader(&shaderMulLighting);
 
-	//Nanosuit 
-	nanosuitModel.loadModel("../models/nanosuit/nanosuit.obj");
-	nanosuitModel.setShader(&shaderMulLighting);
-	camera->setPosition(glm::vec3(0.0, 0.0, 10.0));
-	camera->setDistanceFromTarget(distanceFromTarget);
-	camera->setSensitivity(1.0);
+	// Camera
+	activeCamera = 0;
+	cameraVector[activeCamera]->setPosition(glm::vec3(0.0, 0.0, 10.0));
+	cameraVector[activeCamera]->setDistanceFromTarget(distanceFromTarget);
+	cameraVector[activeCamera]->setSensitivity(1.0);
 
 	// Definimos el tamanio de la imagen
 	int imageWidth, imageHeight;
@@ -744,15 +754,12 @@ void destroy() {
 	modelLamp1.destroy();
 	modelLamp2.destroy();
 	modelLampPost2.destroy();
-	nanosuitModel.destroy();
-
 
 	// Custom objects animate
 	mayowModelAnimate.destroy();
-	modelAnimateCowboy.destroy();
-
-	//Rojo
-	rojoModel.destroy();
+	cowboyModelAnimate.destroy();
+	nanosuitModelAnimate.destroy();
+	pirataModelAnimate.destroy();
 
 	// Textures Delete
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -796,9 +803,9 @@ void mouseCallback(GLFWwindow *window, double xpos, double ypos) {
 	lastMousePosY = ypos;
 }
 
-void scrollCallback(GLFWwindow* window, double xoffset, double yoffset){
+void scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
 	distanceFromTarget -= yoffset;
-	camera->setDistanceFromTarget(distanceFromTarget);
+	cameraVector[activeCamera]->setDistanceFromTarget(distanceFromTarget);
 }
 
 void mouseButtonCallback(GLFWwindow *window, int button, int state, int mod) {
@@ -823,117 +830,167 @@ bool processInput(bool continueApplication) {
 		return false;
 	}
 
-	if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
-		camera->mouseMoveCamera(offsetX, 0.0, deltaTime);
-	if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
-		camera->mouseMoveCamera(0.0, offsetY, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
+		activeCamera++;
+		if (activeCamera > cameraVector.size() - 1)
+			activeCamera = 0;
+	}
+
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+		cameraVector[activeCamera]->mouseMoveCamera(offsetX, 0.0, deltaTime);
+
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+		cameraVector[activeCamera]->mouseMoveCamera(0.0, offsetY, deltaTime);
+
 	offsetX = 0;
 	offsetY = 0;
 
+	// Manejor del angulo Pitch para una mejor visualización
+	// en la escena valor entre 0 y 1, O -> +   P -> -
+	if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) {
+		if (pitchMove < 1.0) {
+			pitchMove += 0.01;
+
+			cameraVector[activeCamera]->setPitch(pitchMove);
+		}
+	}
+	else if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
+		if (pitchMove > 0.0) {
+			pitchMove -= 0.01;
+			cameraVector[activeCamera]->setPitch(pitchMove);
+		}
+	}
+
 	// Seleccionar modelo
-	if (enableCountSelected && glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS){
+	if (enableCountSelected && glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS) {
 		enableCountSelected = false;
 		modelSelected++;
-		if(modelSelected > 3)
+		cameraVector[activeCamera]->setAngleAroundTarget(0.0);
+		cameraVector[activeCamera]->setPitch(0.0);
+		// Se requeria un valor 0, pero por fines prácticos y visuales 
+		// específica un valor razonable
+		cameraVector[activeCamera]->setDistanceFromTarget(5.0);
+
+		if (modelSelected > 4)
 			modelSelected = 0;
-		if(modelSelected == 1)
+		if (modelSelected == 0)
 			fileName = "../animaciones/animation_dart_joints.txt";
-		if (modelSelected == 2)
+		if (modelSelected == 1)
 			fileName = "../animaciones/animation_dart.txt";
 		std::cout << "modelSelected:" << modelSelected << std::endl;
 	}
-	else if(glfwGetKey(window, GLFW_KEY_TAB) == GLFW_RELEASE)
+
+	else if (glfwGetKey(window, GLFW_KEY_TAB) == GLFW_RELEASE)
 		enableCountSelected = true;
 
 	// Guardar key frames
-	if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS
-			&& glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS){
+	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS
+		&& glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
 		record = true;
-		if(myfile.is_open())
+		if (myfile.is_open())
 			myfile.close();
 		myfile.open(fileName);
 	}
-	if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE
-			&& glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS){
+	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE
+		&& glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
 		record = false;
 		myfile.close();
-		if(modelSelected == 1)
+		if (modelSelected == 0)
 			keyFramesDartJoints = getKeyRotFrames(fileName);
-		if (modelSelected == 2)
+		if (modelSelected == 1)
 			keyFramesDart = getKeyFrames(fileName);
 	}
-	if(availableSave && glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS){
+	if (availableSave && glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS) {
 		saveFrame = true;
 		availableSave = false;
-	}if(glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_RELEASE)
+	}if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_RELEASE)
 		availableSave = true;
 
 	// Dart Lego model movements
-	if (modelSelected == 1 && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE &&
-			glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
+	if (modelSelected == 0 && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE &&
+		glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
 		rotDartHead += 0.02;
-	else if (modelSelected == 1 && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS &&
-			glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
+	else if (modelSelected == 0 && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS &&
+		glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
 		rotDartHead -= 0.02;
-	if (modelSelected == 1 && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE &&
-			glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
+	if (modelSelected == 0 && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE &&
+		glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
 		rotDartLeftArm += 0.02;
-	else if (modelSelected == 1 && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS &&
-			glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
+	else if (modelSelected == 0 && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS &&
+		glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
 		rotDartLeftArm -= 0.02;
-	if (modelSelected == 1 && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE &&
-			glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS)
+	if (modelSelected == 0 && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE &&
+		glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS)
 		rotDartRightArm += 0.02;
-	else if (modelSelected == 1 && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS &&
-			glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS)
+	else if (modelSelected == 0 && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS &&
+		glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS)
 		rotDartRightArm -= 0.02;
-	if (modelSelected == 1 && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE &&
-			glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS)
+	if (modelSelected == 0 && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE &&
+		glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS)
 		rotDartLeftHand += 0.02;
-	else if (modelSelected == 1 && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS &&
-			glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS)
+	else if (modelSelected == 0 && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS &&
+		glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS)
 		rotDartLeftHand -= 0.02;
-	if (modelSelected == 1 && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE &&
-			glfwGetKey(window, GLFW_KEY_5) == GLFW_PRESS)
+	if (modelSelected == 0 && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE &&
+		glfwGetKey(window, GLFW_KEY_5) == GLFW_PRESS)
 		rotDartRightHand += 0.02;
-	else if (modelSelected == 1 && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS &&
-			glfwGetKey(window, GLFW_KEY_5) == GLFW_PRESS)
+	else if (modelSelected == 0 && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS &&
+		glfwGetKey(window, GLFW_KEY_5) == GLFW_PRESS)
 		rotDartRightHand -= 0.02;
-	if (modelSelected == 1 && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE &&
-			glfwGetKey(window, GLFW_KEY_6) == GLFW_PRESS)
+	if (modelSelected == 0 && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE &&
+		glfwGetKey(window, GLFW_KEY_6) == GLFW_PRESS)
 		rotDartLeftLeg += 0.02;
-	else if (modelSelected == 1 && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS &&
-			glfwGetKey(window, GLFW_KEY_6) == GLFW_PRESS)
+	else if (modelSelected == 0 && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS &&
+		glfwGetKey(window, GLFW_KEY_6) == GLFW_PRESS)
 		rotDartLeftLeg -= 0.02;
-	if (modelSelected == 1 && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE &&
-			glfwGetKey(window, GLFW_KEY_7) == GLFW_PRESS)
+	if (modelSelected == 0 && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE &&
+		glfwGetKey(window, GLFW_KEY_7) == GLFW_PRESS)
 		rotDartRightLeg += 0.02;
-	else if (modelSelected == 1 && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS &&
-			glfwGetKey(window, GLFW_KEY_7) == GLFW_PRESS)
+	else if (modelSelected == 0 && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS &&
+		glfwGetKey(window, GLFW_KEY_7) == GLFW_PRESS)
 		rotDartRightLeg -= 0.02;
-	if (modelSelected == 2 && glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+	if (modelSelected == 1 && glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
 		modelMatrixDart = glm::rotate(modelMatrixDart, 0.02f, glm::vec3(0, 1, 0));
-	else if (modelSelected == 2 && glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+	else if (modelSelected == 1 && glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
 		modelMatrixDart = glm::rotate(modelMatrixDart, -0.02f, glm::vec3(0, 1, 0));
-	if (modelSelected == 2 && glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+	if (modelSelected == 1 && glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
 		modelMatrixDart = glm::translate(modelMatrixDart, glm::vec3(-0.02, 0.0, 0.0));
-	else if (modelSelected == 2 && glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+	else if (modelSelected == 1 && glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
 		modelMatrixDart = glm::translate(modelMatrixDart, glm::vec3(0.02, 0.0, 0.0));
 
-	if (modelSelected == 2 && glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS){
+	// Mayow animate model movements
+	if (modelSelected == 2 && glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
 		modelMatrixMayow = glm::rotate(modelMatrixMayow, glm::radians(1.0f), glm::vec3(0, 1, 0));
 		animationIndex = 0;
-	}else if (modelSelected == 2 && glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS){
+	}
+	else if (modelSelected == 2 && glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
 		modelMatrixMayow = glm::rotate(modelMatrixMayow, glm::radians(-1.0f), glm::vec3(0, 1, 0));
 		animationIndex = 0;
-	}if (modelSelected == 2 && glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS){
+	}if (modelSelected == 2 && glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
 		modelMatrixMayow = glm::translate(modelMatrixMayow, glm::vec3(0, 0, 0.02));
 		animationIndex = 0;
-	}else if (modelSelected == 2 && glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS){
+	}
+	else if (modelSelected == 2 && glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
 		modelMatrixMayow = glm::translate(modelMatrixMayow, glm::vec3(0, 0, -0.02));
 		animationIndex = 0;
 	}
 
+	// Pirata animate model movements
+	if (modelSelected == 4 && glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+		modelMatrixPirata = glm::rotate(modelMatrixPirata, glm::radians(1.0f), glm::vec3(0, 1, 0));
+		animationIndex = 2;
+	}
+	else if (modelSelected == 4 && glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+		modelMatrixPirata = glm::rotate(modelMatrixPirata, glm::radians(-1.0f), glm::vec3(0, 1, 0));
+		animationIndex = 2;
+	}if (modelSelected == 4 && glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+		modelMatrixPirata = glm::translate(modelMatrixPirata, glm::vec3(0, 0, 0.02));
+		animationIndex = 2;
+	}
+	else if (modelSelected == 4 && glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+		modelMatrixPirata = glm::translate(modelMatrixPirata, glm::vec3(0, 0, -0.02));
+		animationIndex = 2;
+	}
 
 	// Cowboy animate model movements
 	if (modelSelected == 3 && glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
@@ -951,8 +1008,6 @@ bool processInput(bool continueApplication) {
 		modelMatrixCowboy = glm::translate(modelMatrixCowboy, glm::vec3(0, 0, -0.02));
 		animationIndex = 0;
 	}
-
-
 
 	glfwPollEvents();
 	return continueApplication;
@@ -979,19 +1034,13 @@ void applicationLoop() {
 	modelMatrixMayow = glm::translate(modelMatrixMayow, glm::vec3(13.0f, 0.05f, -5.0f));
 	modelMatrixMayow = glm::rotate(modelMatrixMayow, glm::radians(-90.0f), glm::vec3(0, 1, 0));
 
-
+	modelMatrixNanosuit = glm::translate(modelMatrixNanosuit, glm::vec3(13.0f, 1.0f, 10.0f));
 
 	modelMatrixCowboy = glm::translate(modelMatrixCowboy, glm::vec3(-6.0f, 0.05f, -10.0f));
 	modelMatrixCowboy = glm::rotate(modelMatrixCowboy, glm::radians(-90.0f), glm::vec3(0, 1, 0));
 
-	modelMatrixNanosuit = glm::translate(modelMatrixNanosuit, glm::vec3(13.0f, 1.0f, 10.0f));
-
-	modelMatrixRojo = glm::translate(modelMatrixRojo, glm::vec3(13.0f,1.0f,-7.0f));
-;
-
-
-
-
+	modelMatrixPirata = glm::translate(modelMatrixPirata, glm::vec3(6.0f, 0.05f, -10.0f));
+	
 	// Variables to interpolation key frames
 	fileName = "../animaciones/animation_dart_joints.txt";
 	keyFramesDartJoints = getKeyRotFrames(fileName);
@@ -1021,12 +1070,12 @@ void applicationLoop() {
 		glm::mat4 projection = glm::perspective(glm::radians(45.0f),
 				(float) screenWidth / (float) screenHeight, 0.01f, 100.0f);
 	
-		if(modelSelected == 1){
+		if (modelSelected == 0 or modelSelected == 1) {
 			axis = glm::axis(glm::quat_cast(modelMatrixDart));
 			angleTarget = glm::angle(glm::quat_cast(modelMatrixDart));
 			target = modelMatrixDart[3];
 		}
-		else if(modelSelected==2){
+		else if (modelSelected == 2) {
 			axis = glm::axis(glm::quat_cast(modelMatrixMayow));
 			angleTarget = glm::angle(glm::quat_cast(modelMatrixMayow));
 			target = modelMatrixMayow[3];
@@ -1035,7 +1084,11 @@ void applicationLoop() {
 			axis = glm::axis(glm::quat_cast(modelMatrixCowboy));
 			angleTarget = glm::angle(glm::quat_cast(modelMatrixCowboy));
 			target = modelMatrixCowboy[3];
-			
+		}
+		else {
+			axis = glm::axis(glm::quat_cast(modelMatrixPirata));
+			angleTarget = glm::angle(glm::quat_cast(modelMatrixPirata));
+			target = modelMatrixPirata[3];
 		}
 
 		if(std::isnan(angleTarget))
@@ -1258,16 +1311,6 @@ void applicationLoop() {
 			modelLampPost2.setOrientation(glm::vec3(0, lamp2Orientation[i], 0));
 			modelLampPost2.render();
 		}
-		modelMatrixNanosuit[3][1] = terrain.getHeightTerrain(modelMatrixNanosuit[3][0], modelMatrixNanosuit[3][2]);
-		glm::mat4 modelMatrixNanosuitBody = glm::mat4(modelMatrixNanosuit);
-		modelMatrixNanosuitBody = glm::scale(modelMatrixNanosuitBody, glm::vec3(0.15, 0.15, 0.15));// mas chico 
-		nanosuitModel.render(modelMatrixNanosuitBody);
-
-		modelMatrixRojo[3][1] = terrain.getHeightTerrain(modelMatrixRojo[3][0], modelMatrixRojo[3][2]);
-		glm::mat4 modelMatrixRojoBody = glm::mat4(modelMatrixRojo);
-		modelMatrixRojoBody = glm::scale(modelMatrixRojoBody, glm::vec3(0.0015, 0.0015, 0.0015));// mas chico 
-		rojoModel.render(modelMatrixRojoBody);
-
 
 		// Dart lego
 		// Se deshabilita el cull faces IMPORTANTE para la capa
@@ -1330,13 +1373,21 @@ void applicationLoop() {
 		mayowModelAnimate.setAnimationIndex(animationIndex);
 		mayowModelAnimate.render(modelMatrixMayowBody);
 
+		modelMatrixNanosuit[3][1] = terrain.getHeightTerrain(modelMatrixNanosuit[3][0], modelMatrixNanosuit[3][2]);
+		glm::mat4 modelMatrixNanosuitBody = glm::mat4(modelMatrixNanosuit);
+		modelMatrixNanosuitBody = glm::scale(modelMatrixNanosuitBody, glm::vec3(0.15, 0.15, 0.15));
+		nanosuitModelAnimate.render(modelMatrixNanosuitBody);
+
+		modelMatrixPirata[3][1] = terrain.getHeightTerrain(modelMatrixPirata[3][0], modelMatrixPirata[3][2]);
+		glm::mat4 modelMatrixPirataBody = glm::mat4(modelMatrixPirata);
+		modelMatrixPirataBody = glm::scale(modelMatrixPirataBody, glm::vec3(0.15, 0.15, 0.15));
+		pirataModelAnimate.setAnimationIndex(animationIndex);
+		pirataModelAnimate.render(modelMatrixPirataBody);
+
 		modelMatrixCowboy[3][1] = terrain.getHeightTerrain(modelMatrixCowboy[3][0], modelMatrixCowboy[3][2]);
 		glm::mat4 modelMatrixCowboyBody = glm::mat4(modelMatrixCowboy);
 		modelMatrixCowboyBody = glm::scale(modelMatrixCowboyBody, glm::vec3(0.003, 0.003, 0.003));
-		modelAnimateCowboy.setAnimationIndex(0);
-		modelAnimateCowboy.render(modelMatrixCowboyBody);
-
-	
+		cowboyModelAnimate.render(modelMatrixCowboyBody);
 
 		/*******************************************
 		 * Skybox
@@ -1428,29 +1479,61 @@ void applicationLoop() {
 			std::get<0>(collidersOBB.find("lamp2-" + std::to_string(i))->second) = lampCollider;
 		}
 
-		//Agregando caja de colisión. 
-		//colider del nanosuit en esfera, aplicamos mismas transformaciones
-		AbstractModel::SBB nanosuitCollider; //Declaracion del objeto
+		// Collider del Nanosuit
+		// Esfera de colisión
+		// Se declara el objeto de colision tipo esfera
+		AbstractModel::SBB nanosuitCollider; 
+		// Considerar que se deben aplicar las mismas tranformaciones que al modelo
 		glm::mat4 modelMatrixColliderNanosuit = glm::mat4(modelMatrixNanosuit);
 		modelMatrixColliderNanosuit = glm::scale(modelMatrixColliderNanosuit, glm::vec3(0.15, 0.15, 0.15)); 
-		//centro de la esfera envolvente
-		modelMatrixColliderNanosuit =  glm::translate(modelMatrixColliderNanosuit, nanosuitModel.getSbb().c);
-		nanosuitCollider.c = glm::vec3(modelMatrixColliderNanosuit[3]);//splo donde esta el centro de la matriz
-		nanosuitCollider.ratio = nanosuitModel.getSbb().ratio*0.15;
-		// EL ULTIMO VALOR SE PASA PARA QUE NO AVANCE MAS  Y SE REINICIE
+		// Se traslada al centro de la esfera
+		modelMatrixColliderNanosuit =  glm::translate(modelMatrixColliderNanosuit, nanosuitModelAnimate.getSbb().c);
+		// Se coloca el centro de la matriz
+		nanosuitCollider.c = glm::vec3(modelMatrixColliderNanosuit[3]);
+		// Se coloca el radio y el respectivo escalamiento
+		nanosuitCollider.ratio = nanosuitModelAnimate.getSbb().ratio*0.15;
+		// Se le coloca un vector del tipo collider, una etiqueta, 
+		// el objeto de colision y una matriz para dibujar
+		// Se agrega al vecto para que sea iterativo
+		// La matriz se le pasa para detectar la colisión, de tal forma que
+		// exista un tope para que no avance mas y se reinicie
 		addOrUpdateColliders(collidersSBB, "nanosuit", nanosuitCollider, modelMatrixNanosuit);
 
-		//Agregando caja de colisión. 
-		//colider del nanosuit en esfera, aplicamos mismas transformaciones
-		AbstractModel::SBB rojoCollider; //Declaracion del objeto
-		glm::mat4 modelMatrixColliderRojo = glm::mat4(modelMatrixRojo);
-		modelMatrixColliderRojo = glm::scale(modelMatrixColliderRojo, glm::vec3(0.0015, 0.0015, 0.0015));
-		//centro de la esfera envolvente
-		modelMatrixColliderRojo = glm::translate(modelMatrixColliderRojo,rojoModel.getSbb().c);
-		rojoCollider.c = glm::vec3(modelMatrixColliderRojo[3]);//splo donde esta el centro de la matriz
-		rojoCollider.ratio = rojoModel.getSbb().ratio*0.0075;
-		// EL ULTIMO VALOR SE PASA PARA QUE NO AVANCE MAS  Y SE REINICIE
-		addOrUpdateColliders(collidersSBB, "rojo", rojoCollider, modelMatrixRojo);
+		// Collider del Pirata
+		// Esfera de colisión
+		// Se declara el objeto de colision tipo esfera
+		AbstractModel::SBB pirataCollider;
+		// Considerar que se deben aplicar las mismas tranformaciones que al modelo
+		glm::mat4 modelMatrixColliderPirata = glm::mat4(modelMatrixPirata);
+		modelMatrixColliderPirata = glm::scale(modelMatrixColliderPirata, glm::vec3(0.3, 0.3, 0.3));
+		// Se traslada al centro de la esfera
+		modelMatrixColliderPirata = glm::translate(modelMatrixColliderPirata, pirataModelAnimate.getSbb().c);
+		// Se coloca el centro de la matriz
+		pirataCollider.c = glm::vec3(modelMatrixColliderPirata[3]);
+		// Se coloca el radio y el respectivo escalamiento
+		pirataCollider.ratio = pirataModelAnimate.getSbb().ratio*0.3;
+		// Se le coloca un vector del tipo collider, una etiqueta, 
+		// el objeto de colision y una matriz para dibujar
+		// Se agrega al vecto para que sea iterativo
+		// La matriz se le pasa para detectar la colisión, de tal forma que
+		// exista un tope para que no avance mas y se reinicie
+		addOrUpdateColliders(collidersSBB, "pirata", pirataCollider, modelMatrixPirata);
+
+		// Collider de Cowboy
+		AbstractModel::OBB cowboyCollider;
+		glm::mat4 modelmatrixColliderCowboy = glm::mat4(modelMatrixCowboy);
+		modelmatrixColliderCowboy = glm::rotate(modelmatrixColliderCowboy,
+			glm::radians(-90.0f), glm::vec3(1, 0, 0));
+		// Set the orientation of collider before doing the scale
+		cowboyCollider.u = glm::quat_cast(modelmatrixColliderCowboy);
+		modelmatrixColliderCowboy = glm::scale(modelmatrixColliderCowboy, glm::vec3(0.35, 0.35, 0.35));
+		modelmatrixColliderCowboy = glm::translate(modelmatrixColliderCowboy,
+			glm::vec3(cowboyModelAnimate.getObb().c.x,
+				cowboyModelAnimate.getObb().c.y,
+				cowboyModelAnimate.getObb().c.z));
+		cowboyCollider.e = cowboyModelAnimate.getObb().e * glm::vec3(0.35, 0.35, 0.35) * glm::vec3(0.787401574, 0.787401574, 0.787401574);
+		cowboyCollider.c = glm::vec3(modelmatrixColliderCowboy[3]);
+		addOrUpdateColliders(collidersOBB, "cowboy", cowboyCollider, modelMatrixCowboy);
 
 		// Collider de mayow
 		AbstractModel::OBB mayowCollider;
@@ -1467,27 +1550,6 @@ void applicationLoop() {
 		mayowCollider.e = mayowModelAnimate.getObb().e * glm::vec3(0.021, 0.021, 0.021) * glm::vec3(0.787401574, 0.787401574, 0.787401574);
 		mayowCollider.c = glm::vec3(modelmatrixColliderMayow[3]);
 		addOrUpdateColliders(collidersOBB, "mayow", mayowCollider, modelMatrixMayow);
-
-
-		// Collider de cowboy
-		AbstractModel::OBB cowBoyCollider;
-		glm::mat4 modelmatrixColliderCowBoy = glm::mat4(modelMatrixCowboy);
-		modelmatrixColliderCowBoy = glm::rotate(modelmatrixColliderCowBoy,
-			glm::radians(-90.0f), glm::vec3(1, 0, 0));
-		// Set the orientation of collider before doing the scale
-		cowBoyCollider.u = glm::quat_cast(modelmatrixColliderCowBoy);
-		modelmatrixColliderCowBoy = glm::scale(modelmatrixColliderCowBoy, glm::vec3(0.4, 0.4, 0.4)* glm::vec3(0.787401574, 0.787401574, 0.787401574));
-		modelmatrixColliderCowBoy = glm::translate(modelmatrixColliderCowBoy,
-			glm::vec3(modelAnimateCowboy.getObb().c.x,
-				modelAnimateCowboy.getObb().c.y,
-				modelAnimateCowboy.getObb().c.z));
-		cowBoyCollider.e = modelAnimateCowboy.getObb().e * glm::vec3(0.4, 0.4, 0.4);
-		cowBoyCollider.c = glm::vec3(modelmatrixColliderCowBoy[3]);
-		addOrUpdateColliders(collidersOBB, "cowBoy", cowBoyCollider, modelMatrixCowboy);
-
-
-		
-
 
 		/*******************************************
 		 * Render de colliders
@@ -1611,6 +1673,10 @@ void applicationLoop() {
 					if (jt->first.compare("mayow") == 0)
 						modelMatrixMayow = std::get<1>(jt->second);
 					if (jt->first.compare("dart") == 0)
+						modelMatrixDart = std::get<1>(jt->second);
+					if (jt->first.compare("cowboy") == 0)
+						modelMatrixDart = std::get<1>(jt->second);
+					if (jt->first.compare("pirata") == 0)
 						modelMatrixDart = std::get<1>(jt->second);
 				}
 			}

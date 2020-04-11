@@ -112,9 +112,11 @@ vec3 calculateSpotLights(){
 }
 
 void main()
-    //IMPORTANTE
-{	//Si se quieren decartar transparencias 
+{	 
 	vec4 colorText = texture(texture1, our_uv);
+	// IMPORTANTE
+	// Si se quieren decartar transparencias quitar if,
+	// considerar manejar este aspecto directamente en el modelo
 	//if(colorText.a < 0.1)
 		//discard;
     color = vec4(calculateDirectionalLight(directionalLight.light, directionalLight.direction) + calculatePointLights() + calculateSpotLights(), colorText.a);

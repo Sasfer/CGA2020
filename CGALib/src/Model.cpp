@@ -86,17 +86,37 @@ void Model::loadModel(const std::string & path) {
 	this->sbb.c = glm::vec3((this->aabb.mins.x + this->aabb.maxs.x) / 2.0f,
 			(this->aabb.mins.y + this->aabb.maxs.y) / 2.0f,
 			(this->aabb.mins.z + this->aabb.maxs.z) / 2.0f);
+	// Esfera envolvente externa
+	/*
 	this->sbb.ratio = sqrt(
 			pow(this->aabb.mins.x - this->aabb.maxs.x, 2)
-					+ pow(this->aabb.mins.y - this->aabb.maxs.y, 2)
-					+ pow(this->aabb.mins.z - this->aabb.maxs.z, 2)) / 2.0f;
+			+ pow(this->aabb.mins.y - this->aabb.maxs.y, 2)
+			+ pow(this->aabb.mins.z - this->aabb.maxs.z, 2)) / 2.0f;
+	*/
+	// Esfera envolvente interna
+	// Se considera la distancia más grande
+	double disX, disY, disZ, auxD;
+	
+	disX = pow(this->aabb.mins.x - this->aabb.maxs.x, 2);
+	disY = pow(this->aabb.mins.y - this->aabb.maxs.y, 2);
+	disZ = pow(this->aabb.mins.z - this->aabb.maxs.z, 2);
 
+	if (disX > disY) 
+		auxD = disX;
+	else 
+		auxD = disY;
 
+	if (auxD < disZ)
+		auxD = disZ;
+		
+	// Calculo del radio
+	this->sbb.ratio = sqrt(auxD) / 2.0f;
+	
 	// Se crea la obb
 	this->obb.c = this->sbb.c;
-	/*this->obb.e.x = aabb.maxs.x - aabb.mins.x;
+	this->obb.e.x = aabb.maxs.x - aabb.mins.x;
 	this->obb.e.y = aabb.maxs.y - aabb.mins.y;
-	this->obb.e.z = aabb.maxs.z - aabb.mins.z;*/
+	this->obb.e.z = aabb.maxs.z - aabb.mins.z;
 	this->obb.e = (aabb.maxs - aabb.mins) / 2.0f;
 	this->obb.u = glm::quat(0.0, 0.0, 0.0, 1);
 }

@@ -835,7 +835,6 @@ bool processInput(bool continueApplication) {
 			activeCamera = 0;
 	}
 	
-
 	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
 		cameraVector[activeCamera]->mouseMoveCamera(offsetX, 0.0, deltaTime);
 	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
