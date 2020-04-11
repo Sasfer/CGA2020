@@ -1531,7 +1531,8 @@ void applicationLoop() {
 			glm::vec3(cowboyModelAnimate.getObb().c.x,
 				cowboyModelAnimate.getObb().c.y,
 				cowboyModelAnimate.getObb().c.z));
-		cowboyCollider.e = cowboyModelAnimate.getObb().e * glm::vec3(0.35, 0.35, 0.35) * glm::vec3(0.787401574, 0.787401574, 0.787401574);
+		cowboyCollider.e = cowboyModelAnimate.getObb().e * glm::vec3(0.35, 0.35, 0.35) * 
+			glm::vec3(0.787401574, 0.787401574, 0.787401574);
 		cowboyCollider.c = glm::vec3(modelmatrixColliderCowboy[3]);
 		addOrUpdateColliders(collidersOBB, "cowboy", cowboyCollider, modelMatrixCowboy);
 

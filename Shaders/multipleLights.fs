@@ -119,5 +119,6 @@ void main()
 	// considerar manejar este aspecto directamente en el modelo
 	//if(colorText.a < 0.1)
 		//discard;
-    color = vec4(calculateDirectionalLight(directionalLight.light, directionalLight.direction) + calculatePointLights() + calculateSpotLights(), colorText.a);
+    color = vec4(calculateDirectionalLight(directionalLight.light, directionalLight.direction)
+	+ calculatePointLights() + calculateSpotLights(), colorText.a);
 }
