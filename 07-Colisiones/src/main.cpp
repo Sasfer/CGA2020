@@ -871,7 +871,7 @@ bool processInput(bool continueApplication) {
 		// específica un valor razonable
 		cameraVector[activeCamera]->setDistanceFromTarget(5.0);
 
-		if (modelSelected > 4)
+		if (modelSelected > 5)
 			modelSelected = 0;
 		if (modelSelected == 0)
 			fileName = "../animaciones/animation_dart_joints.txt";
@@ -1009,6 +1009,20 @@ bool processInput(bool continueApplication) {
 		animationIndex = 0;
 	}
 
+	// Lambo 
+	if (modelSelected == 5 && glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+		modelMatrixLambo = glm::rotate(modelMatrixLambo, glm::radians(1.0f), glm::vec3(0, 1, 0));
+	}
+	else if (modelSelected == 5 && glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+		modelMatrixLambo = glm::rotate(modelMatrixLambo, glm::radians(-1.0f), glm::vec3(0, 1, 0));
+	}
+	if (modelSelected == 5 && glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+		modelMatrixLambo = glm::translate(modelMatrixLambo, glm::vec3(0, 0, 0.02));
+	}
+	else if (modelSelected == 5 && glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+		modelMatrixLambo = glm::translate(modelMatrixLambo, glm::vec3(0, 0, -0.02));
+	}
+
 	glfwPollEvents();
 	return continueApplication;
 }
@@ -1085,10 +1099,15 @@ void applicationLoop() {
 			angleTarget = glm::angle(glm::quat_cast(modelMatrixCowboy));
 			target = modelMatrixCowboy[3];
 		}
-		else {
+		else if (modelSelected == 4) {
 			axis = glm::axis(glm::quat_cast(modelMatrixPirata));
 			angleTarget = glm::angle(glm::quat_cast(modelMatrixPirata));
 			target = modelMatrixPirata[3];
+		}
+		else {
+			axis = glm::axis(glm::quat_cast(modelMatrixLambo));
+			angleTarget = glm::angle(glm::quat_cast(modelMatrixLambo));
+			target = modelMatrixLambo[3];
 		}
 
 		if(std::isnan(angleTarget))
@@ -1272,6 +1291,7 @@ void applicationLoop() {
 		modelHeliHeli.render(modelMatrixHeliHeli);
 
 		// Lambo car
+		// Se renderiza por parte la escena
 		glDisable(GL_CULL_FACE);
 		glm::mat4 modelMatrixLamboChasis = glm::mat4(modelMatrixLambo);
 		modelMatrixLamboChasis[3][1] = terrain.getHeightTerrain(modelMatrixLamboChasis[3][0], modelMatrixLamboChasis[3][2]);
@@ -1436,6 +1456,32 @@ void applicationLoop() {
 		aircraftCollider.e = modelAircraft.getObb().e * glm::vec3(1.0, 1.0, 1.0);
 		addOrUpdateColliders(collidersOBB, "aircraft", aircraftCollider, modelMatrixAircraft);
 
+		// Collider de Lamp
+		// Crear un objeto de tipo collider OBB
+		// Esta tiene las propiedades:
+		// c: centro    
+		// e: medias dimensiones de las aristas    
+		// u: orientación en forma de quaternion
+		// Se crea una matriz de transformación con la matriz padre del modelo
+		glm::mat4 modelMatrixColliderLambo = glm::mat4(modelMatrixLambo);
+		AbstractModel::OBB lamboCollider;
+		lamboCollider.u = glm::quat_cast(modelMatrixLambo);
+		// Se aplican transformaciones realizadas al lambo
+		// Si se quita esta línea se siguie teniendo bien colocado el collider
+		// Conconsiderar que se descomento un par de líneas para la practica en model.cpp
+		modelMatrixColliderLambo[3][1] = terrain.getHeightTerrain(modelMatrixColliderLambo[3][0], modelMatrixColliderLambo[3][2]);
+		modelMatrixColliderLambo = glm::scale(modelMatrixColliderLambo, glm::vec3(1.3,1.3,1.3));
+		// Se coloca el collider al centro de la caja
+		modelMatrixColliderLambo = glm::translate(modelMatrixColliderLambo, modelLambo.getObb().c);
+		lamboCollider.c = glm::vec3(modelMatrixColliderLambo[3]);
+		lamboCollider.e = modelLambo.getObb().e * glm::vec3(1.3, 1.3, 1.3);
+		// Los parametros a los cuales se hace referencia son:
+		// 1. Arreglo de colliders
+		// 2. Etiqueta
+		// 3. Collider qu se creo
+		// 4. Matriz transformación original
+		addOrUpdateColliders(collidersOBB, "lambo",lamboCollider, modelMatrixLambo);
+
 		//Collider del la rock
 		AbstractModel::SBB rockCollider;
 		glm::mat4 modelMatrixColliderRock= glm::mat4(matrixModelRock);
@@ -1505,13 +1551,13 @@ void applicationLoop() {
 		AbstractModel::SBB pirataCollider;
 		// Considerar que se deben aplicar las mismas tranformaciones que al modelo
 		glm::mat4 modelMatrixColliderPirata = glm::mat4(modelMatrixPirata);
-		modelMatrixColliderPirata = glm::scale(modelMatrixColliderPirata, glm::vec3(0.3, 0.3, 0.3));
+		modelMatrixColliderPirata = glm::scale(modelMatrixColliderPirata, glm::vec3(0.35, 0.35, 0.35));
 		// Se traslada al centro de la esfera
 		modelMatrixColliderPirata = glm::translate(modelMatrixColliderPirata, pirataModelAnimate.getSbb().c);
 		// Se coloca el centro de la matriz
 		pirataCollider.c = glm::vec3(modelMatrixColliderPirata[3]);
 		// Se coloca el radio y el respectivo escalamiento
-		pirataCollider.ratio = pirataModelAnimate.getSbb().ratio*0.3;
+		pirataCollider.ratio = pirataModelAnimate.getSbb().ratio*0.35;
 		// Se le coloca un vector del tipo collider, una etiqueta, 
 		// el objeto de colision y una matriz para dibujar
 		// Se agrega al vecto para que sea iterativo
@@ -1555,6 +1601,9 @@ void applicationLoop() {
 		/*******************************************
 		 * Render de colliders
 		 *******************************************/
+		// Estas lineas se encargan de iterar sobre los collider
+		// que han sido agregados a la escena
+		// Dibujo de los colliders tipo caja
 		for (std::map<std::string, std::tuple<AbstractModel::OBB, glm::mat4, glm::mat4> >::iterator it =
 				collidersOBB.begin(); it != collidersOBB.end(); it++) {
 			glm::mat4 matrixCollider = glm::mat4(1.0);
@@ -1566,6 +1615,7 @@ void applicationLoop() {
 			boxCollider.render(matrixCollider);
 		}
 
+		// Dibujo de los colliders tipos esfera
 		for (std::map<std::string, std::tuple<AbstractModel::SBB, glm::mat4, glm::mat4> >::iterator it =
 				collidersSBB.begin(); it != collidersSBB.end(); it++) {
 			glm::mat4 matrixCollider = glm::mat4(1.0);
@@ -1599,6 +1649,7 @@ void applicationLoop() {
 		/*******************************************
 		 * Test Colisions
 		 *******************************************/
+		// Se hace la prueba de la colisión, una por una
 		for (std::map<std::string,
 				std::tuple<AbstractModel::OBB, glm::mat4, glm::mat4> >::iterator it =
 				collidersOBB.begin(); it != collidersOBB.end(); it++) {
@@ -1606,6 +1657,7 @@ void applicationLoop() {
 			for (std::map<std::string,
 					std::tuple<AbstractModel::OBB, glm::mat4, glm::mat4> >::iterator jt =
 					collidersOBB.begin(); jt != collidersOBB.end(); jt++) {
+				// Evita que se haga comparación con si mismo el collider
 				if (it != jt
 						&& testOBBOBB(std::get<0>(it->second),
 								std::get<0>(jt->second))) {
@@ -1679,6 +1731,8 @@ void applicationLoop() {
 						modelMatrixDart = std::get<1>(jt->second);
 					if (jt->first.compare("pirata") == 0)
 						modelMatrixDart = std::get<1>(jt->second);
+					if (jt->first.compare("lambo") == 0)
+						modelMatrixDart = std::get<1>(jt->second);
 				}
 			}
 		}
@@ -1744,7 +1798,14 @@ void applicationLoop() {
 
 		// Constantes de animaciones
 		rotHelHelY += 0.5;
-		animationIndex = 1;
+		
+		// Animación Idle de los modelos
+		if (modelSelected == 2) {
+			animationIndex = 1;
+		}
+		else if (modelSelected == 4) {
+			animationIndex = 0;
+		}
 
 		/*******************************************
 		 * State machines
