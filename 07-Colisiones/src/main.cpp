@@ -1039,10 +1039,14 @@ bool processInput(bool continueApplication) {
 
 	// Lambo animate model movements
 	if (modelSelected == 6 && glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+		modelMatrixLambo = glm::translate(modelMatrixLambo, glm::vec3(0.0, -1.498, 0.431));
 		modelMatrixLambo = glm::rotate(modelMatrixLambo, glm::radians(1.0f), glm::vec3(0, 1, 0));
+		modelMatrixLambo = glm::translate(modelMatrixLambo, glm::vec3(0.0, 1.498, -0.431));
 	}
 	else if (modelSelected == 6 && glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+		modelMatrixLambo = glm::translate(modelMatrixLambo, glm::vec3(0.0, -1.498, 0.431));
 		modelMatrixLambo = glm::rotate(modelMatrixLambo, glm::radians(-1.0f), glm::vec3(0, 1, 0));
+		modelMatrixLambo = glm::translate(modelMatrixLambo, glm::vec3(0.0, 1.498, -0.431));
 	}
 	if (modelSelected == 6 && glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
 		modelMatrixLambo = glm::translate(modelMatrixLambo, glm::vec3(0, 0, 0.02));
@@ -1111,32 +1115,37 @@ void applicationLoop() {
 
 		glm::mat4 projection = glm::perspective(glm::radians(45.0f),
 			(float)screenWidth / (float)screenHeight, 0.01f, 100.0f);
-
+		// Dart
 		if (modelSelected == 0 or modelSelected == 1) {
 			axis = glm::axis(glm::quat_cast(modelMatrixDart));
 			angleTarget = glm::angle(glm::quat_cast(modelMatrixDart));
 			target = modelMatrixDart[3];
 		}
+		// Dart
 		else if (modelSelected == 2) {
 			axis = glm::axis(glm::quat_cast(modelMatrixMayow));
 			angleTarget = glm::angle(glm::quat_cast(modelMatrixMayow));
 			target = modelMatrixMayow[3];
 		}
+		// Cowboy
 		else if (modelSelected == 3) {
 			axis = glm::axis(glm::quat_cast(modelMatrixCowboy));
 			angleTarget = glm::angle(glm::quat_cast(modelMatrixCowboy));
 			target = modelMatrixCowboy[3];
 		}
+		// Pirata
 		else if (modelSelected == 4) {
 			axis = glm::axis(glm::quat_cast(modelMatrixPirata));
 			angleTarget = glm::angle(glm::quat_cast(modelMatrixPirata));
 			target = modelMatrixPirata[3];
 		}
+		// Nanosuit
 		else if (modelSelected == 5) {
 			axis = glm::axis(glm::quat_cast(modelMatrixNanosuit));
 			angleTarget = glm::angle(glm::quat_cast(modelMatrixNanosuit));
 			target = modelMatrixNanosuit[3];
 		}
+		// Lambo
 		else {
 			axis = glm::axis(glm::quat_cast(modelMatrixLambo));
 			angleTarget = glm::angle(glm::quat_cast(modelMatrixLambo));
@@ -1428,6 +1437,7 @@ void applicationLoop() {
 		modelMatrixNanosuit[3][1] = terrain.getHeightTerrain(modelMatrixNanosuit[3][0], modelMatrixNanosuit[3][2]);
 		glm::mat4 modelMatrixNanosuitBody = glm::mat4(modelMatrixNanosuit);
 		modelMatrixNanosuitBody = glm::scale(modelMatrixNanosuitBody, glm::vec3(0.15, 0.15, 0.15));
+		nanosuitModelAnimate.setAnimationIndex(animationIndex);
 		nanosuitModelAnimate.render(modelMatrixNanosuitBody);
 
 		modelMatrixPirata[3][1] = terrain.getHeightTerrain(modelMatrixPirata[3][0], modelMatrixPirata[3][2]);
@@ -1491,8 +1501,7 @@ void applicationLoop() {
 		// Collider de Lamb
 		// Crear un objeto de tipo collider OBB
 		// Esta tiene las propiedades:
-		// c: centro    
-		// e: medias dimensiones de las aristas    
+		// c: centro		e: medias dimensiones de las aristas    
 		// u: orientación en forma de quaternion
 		// Se crea una matriz de transformación con la matriz padre del modelo
 		glm::mat4 modelMatrixColliderLambo = glm::mat4(modelMatrixLambo);
@@ -1501,17 +1510,16 @@ void applicationLoop() {
 		// Se aplican transformaciones realizadas al lambo
 		// Si se quita esta línea se siguie teniendo bien colocado el collider
 		// Conconsiderar que se descomento un par de líneas para la practica en model.cpp
-		modelMatrixColliderLambo[3][1] = terrain.getHeightTerrain(modelMatrixColliderLambo[3][0], modelMatrixColliderLambo[3][2]);
+		modelMatrixColliderLambo[3][1] = terrain.getHeightTerrain(modelMatrixColliderLambo[3][0], 
+			modelMatrixColliderLambo[3][2]);
 		modelMatrixColliderLambo = glm::scale(modelMatrixColliderLambo, glm::vec3(1.3,1.3,1.3));
 		// Se coloca el collider al centro de la caja
 		modelMatrixColliderLambo = glm::translate(modelMatrixColliderLambo, modelLambo.getObb().c);
 		lamboCollider.c = glm::vec3(modelMatrixColliderLambo[3]);
 		lamboCollider.e = modelLambo.getObb().e * glm::vec3(1.3, 1.3, 1.3);
 		// Los parametros a los cuales se hace referencia son:
-		// 1. Arreglo de colliders
-		// 2. Etiqueta
-		// 3. Collider qu se creo
-		// 4. Matriz transformación original
+		// 1. Arreglo de colliders		2. Etiqueta
+		// 3. Collider qu se creo		4. Matriz transformación original
 		addOrUpdateColliders(collidersOBB, "lambo",lamboCollider, modelMatrixLambo);
 
 		//Collider del la rock
@@ -1759,9 +1767,13 @@ void applicationLoop() {
 					if (jt->first.compare("dart") == 0)
 						modelMatrixDart = std::get<1>(jt->second);
 					if (jt->first.compare("cowboy") == 0)
-						modelMatrixDart = std::get<1>(jt->second);
+						modelMatrixCowboy = std::get<1>(jt->second);
 					if (jt->first.compare("pirata") == 0)
-						modelMatrixDart = std::get<1>(jt->second);
+						modelMatrixPirata = std::get<1>(jt->second);
+					if (jt->first.compare("nanosuit") == 0)
+						modelMatrixNanosuit = std::get<1>(jt->second);
+					if (jt->first.compare("lambo") == 0)
+						modelMatrixLambo = std::get<1>(jt->second);
 				}
 			}
 		}
