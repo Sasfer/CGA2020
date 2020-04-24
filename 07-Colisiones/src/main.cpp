@@ -1591,13 +1591,16 @@ void applicationLoop() {
 		AbstractModel::SBB pirataCollider;
 		// Considerar que se deben aplicar las mismas tranformaciones que al modelo
 		glm::mat4 modelMatrixColliderPirata = glm::mat4(modelMatrixPirata);
-		modelMatrixColliderPirata = glm::scale(modelMatrixColliderPirata, glm::vec3(0.35, 0.35, 0.35));
+		// Se aplica la escala del modelo en Blender
+		modelMatrixColliderPirata = glm::scale(modelMatrixColliderPirata, glm::vec3(2.5, 2.5, 2.5));
+		// Se aplica la escala de la definición del modelo
+		modelMatrixColliderPirata = glm::scale(modelMatrixColliderPirata, glm::vec3(0.15, 0.15, 0.15));
 		// Se traslada al centro de la esfera
 		modelMatrixColliderPirata = glm::translate(modelMatrixColliderPirata, pirataModelAnimate.getSbb().c);
 		// Se coloca el centro de la matriz
 		pirataCollider.c = glm::vec3(modelMatrixColliderPirata[3]);
-		// Se coloca el radio y el respectivo escalamiento
-		pirataCollider.ratio = pirataModelAnimate.getSbb().ratio * 0.35;
+		// Se coloca el radio y el respectivo escalamiento en el orden especificado anteriormente
+		pirataCollider.ratio = pirataModelAnimate.getSbb().ratio * 2.5 * 0.15;
 		// Se le coloca un vector del tipo collider, una etiqueta, 
 		// el objeto de colision y una matriz para dibujar
 		// Se agrega al vecto para que sea iterativo
@@ -1612,12 +1615,16 @@ void applicationLoop() {
 			glm::radians(-90.0f), glm::vec3(1, 0, 0));
 		// Set the orientation of collider before doing the scale
 		cowboyCollider.u = glm::quat_cast(modelmatrixColliderCowboy);
-		modelmatrixColliderCowboy = glm::scale(modelmatrixColliderCowboy, glm::vec3(0.35, 0.35, 0.35));
+		// Se aplica la escala del modelo en Blender
+		modelmatrixColliderCowboy = glm::scale(modelmatrixColliderCowboy, glm::vec3(100.0, 100.0, 100.0));
+		// Se aplica la escala de la definición del modelo
+		modelmatrixColliderCowboy = glm::scale(modelmatrixColliderCowboy, glm::vec3(0.003, 0.003, 0.003));
 		modelmatrixColliderCowboy = glm::translate(modelmatrixColliderCowboy,
 			glm::vec3(cowboyModelAnimate.getObb().c.x,
 				cowboyModelAnimate.getObb().c.y,
 				cowboyModelAnimate.getObb().c.z));
-		cowboyCollider.e = cowboyModelAnimate.getObb().e * glm::vec3(0.35, 0.35, 0.35) * glm::vec3(0.787401574, 0.787401574, 0.787401574);
+		// Se aplican las escalas al collider, en el orden en que se definieron
+		cowboyCollider.e = cowboyModelAnimate.getObb().e * glm::vec3(100.0, 100.0, 100.0) * glm::vec3(0.003, 0.003, 0.003);
 		cowboyCollider.c = glm::vec3(modelmatrixColliderCowboy[3]);
 		addOrUpdateColliders(collidersOBB, "cowboy", cowboyCollider, modelMatrixCowboy);
 
