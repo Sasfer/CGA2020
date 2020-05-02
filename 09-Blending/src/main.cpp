@@ -6,6 +6,7 @@
 //std includes
 #include <string>
 #include <iostream>
+#include <cstdio>
 
 //glfw include
 #include <GLFW/glfw3.h>
@@ -57,18 +58,8 @@ Shader shaderMulLighting;
 //Shader para el terreno
 Shader shaderTerrain;
 
-//Variable that tells which camera is active, it's an index
-int activeCamera = 0;
-
 std::shared_ptr<Camera> camera(new ThirdPersonCamera());
-std::shared_ptr<Camera> FPCamera(new FirstPersonCamera());
-
-/*Array or list that contains the cameras, it's a sahred_ptr<Camera vector>,
-shared_ptr is an smart pointer or sahered pointer towards camera class object*/
-std::vector<std::shared_ptr<Camera>> cameraVector = { camera,FPCamera };
-
 float distanceFromTarget = 7.0;
-float pitchMove = 0.0;
 
 Sphere skyboxSphere(20, 20);
 Box boxCollider;
@@ -102,13 +93,11 @@ Model modelLamp2;
 Model modelLampPost2;
 // Hierba
 Model modelGrass;
-
 // Model animate instance
 // Mayow
 Model mayowModelAnimate;
-// Pirata
-Model pirataModelAnimate;
-
+//Kero
+Model keroModelAnimate;
 // Terrain model instance
 Terrain terrain(-1, -1, 200, 8, "../Textures/heightmap.png");
 
@@ -142,7 +131,7 @@ glm::mat4 modelMatrixLambo = glm::mat4(1.0);
 glm::mat4 modelMatrixAircraft = glm::mat4(1.0);
 glm::mat4 modelMatrixDart = glm::mat4(1.0f);
 glm::mat4 modelMatrixMayow = glm::mat4(1.0f);
-glm::mat4 modelMatrixPirata = glm::mat4(1.0f);
+glm::mat4 modelMatrixKero = glm::mat4(1.0f);
 
 int animationIndex = 1;
 float rotDartHead = 0.0, rotDartLeftArm = 0.0, rotDartLeftHand = 0.0, rotDartRightArm = 0.0, rotDartRightHand = 0.0, rotDartLeftLeg = 0.0, rotDartRightLeg = 0.0;
@@ -185,10 +174,13 @@ std::vector<glm::vec3> lamp2Position = { glm::vec3(-36.52, 0, -23.24),
 std::vector<float> lamp2Orientation = {21.37 + 90, -65.0 + 90};
 
 // Blending model unsorted
+//1. Renderizar los objetos no transparentes
+
 std::map<std::string, glm::vec3> blendingUnsorted = {
 		{"aircraft", glm::vec3(10.0, 0.0, -17.5)},
 		{"lambo", glm::vec3(23.0, 0.0, 0.0)},
-		{"heli", glm::vec3(5.0, 10.0, -5.0)}
+		{"heli", glm::vec3(5.0, 10.0, -5.0)},
+		{"grass", glm::vec3(0.0f, 0.0f, 0.0f)}
 };
 
 double deltaTime;
@@ -260,11 +252,7 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	glViewport(0, 0, screenWidth, screenHeight);
 	glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
 
-	// Se habilita la prueba del buffer de profundidad, de tal forma 
-	// que se descartan los pixeles que estan por detras de otros
 	glEnable(GL_DEPTH_TEST);
-	// Se habilita la prueba de recorte de caras ocultas, de tal forma
-	// que se descartartan las geometrías que no se ven
 	glEnable(GL_CULL_FACE);
 
 	// Inicialización de los shaders
@@ -346,17 +334,16 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	modelLampPost2.setShader(&shaderMulLighting);
 
 	//Grass
-	modelGrass.loadModel("../models/grass/grassModel.obj");
+	modelGrass.loadModel("../models/grassSplit/grassSplit.obj");
 	modelGrass.setShader(&shaderMulLighting);
 
 	//Mayow
 	mayowModelAnimate.loadModel("../models/mayow/personaje2.fbx");
 	mayowModelAnimate.setShader(&shaderMulLighting);
 
-	// Pirata
-	//Orden de animaciones 0 Idle   1 Nada   2 Walking
-	pirataModelAnimate.loadModel("../models/mixamo/pirata.fbx");
-	pirataModelAnimate.setShader(&shaderMulLighting);
+	//Kero
+	//keroModelAnimate.loadModel("../models/kero/kero.fbx");
+	//keroModelAnimate.setShader(&shaderMulLighting);
 
 	camera->setPosition(glm::vec3(0.0, 0.0, 10.0));
 	camera->setDistanceFromTarget(distanceFromTarget);
@@ -757,10 +744,10 @@ void destroy() {
 	modelLamp2.destroy();
 	modelLampPost2.destroy();
 	modelGrass.destroy();
+	keroModelAnimate.destroy();
 
 	// Custom objects animate
 	mayowModelAnimate.destroy();
-	pirataModelAnimate.destroy();
 
 	// Textures Delete
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -831,56 +818,25 @@ bool processInput(bool continueApplication) {
 		return false;
 	}
 
-	if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
-		activeCamera++;
-		if (activeCamera > cameraVector.size() - 1)
-			activeCamera = 0;
-	}
-
-	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
-		cameraVector[activeCamera]->mouseMoveCamera(offsetX, 0.0, deltaTime);
-
-	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
-		cameraVector[activeCamera]->mouseMoveCamera(0.0, offsetY, deltaTime);
-
+	if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+		camera->mouseMoveCamera(offsetX, 0.0, deltaTime);
+	if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+		camera->mouseMoveCamera(0.0, offsetY, deltaTime);
 	offsetX = 0;
 	offsetY = 0;
 
-	// Manejor del angulo Pitch para una mejor visualización
-	// en la escena valor entre 0 y 1, O -> +   P -> -
-	if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) {
-		if (pitchMove < 1.0) {
-			pitchMove += 0.01;
-
-			cameraVector[activeCamera]->setPitch(pitchMove);
-		}
-	}
-	else if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
-		if (pitchMove > 0.0) {
-			pitchMove -= 0.01;
-			cameraVector[activeCamera]->setPitch(pitchMove);
-		}
-	}
-
 	// Seleccionar modelo
-	if (enableCountSelected && glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS) {
+	if (enableCountSelected && glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS){
 		enableCountSelected = false;
 		modelSelected++;
-		cameraVector[activeCamera]->setAngleAroundTarget(0.0);
-		cameraVector[activeCamera]->setPitch(0.0);
-		// Se requeria un valor 0, pero por fines prácticos y visuales 
-		// específica un valor razonable
-		cameraVector[activeCamera]->setDistanceFromTarget(5.0);
-
-		if (modelSelected > 3)
+		if(modelSelected > 2)
 			modelSelected = 0;
-		if (modelSelected == 0)
+		if(modelSelected == 1)
 			fileName = "../animaciones/animation_dart_joints.txt";
-		if (modelSelected == 1)
+		if (modelSelected == 2)
 			fileName = "../animaciones/animation_dart.txt";
 		std::cout << "modelSelected:" << modelSelected << std::endl;
 	}
-
 	else if(glfwGetKey(window, GLFW_KEY_TAB) == GLFW_RELEASE)
 		enableCountSelected = true;
 
@@ -973,23 +929,6 @@ bool processInput(bool continueApplication) {
 		animationIndex = 0;
 	}
 
-	// Pirata animate model movements
-	if (modelSelected == 3 && glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-		modelMatrixPirata = glm::rotate(modelMatrixPirata, glm::radians(1.0f), glm::vec3(0, 1, 0));
-		animationIndex = 2;
-	}
-	else if (modelSelected == 3 && glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-		modelMatrixPirata = glm::rotate(modelMatrixPirata, glm::radians(-1.0f), glm::vec3(0, 1, 0));
-		animationIndex = 2;
-	}if (modelSelected == 3 && glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-		modelMatrixPirata = glm::translate(modelMatrixPirata, glm::vec3(0, 0, 0.02));
-		animationIndex = 2;
-	}
-	else if (modelSelected == 3 && glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-		modelMatrixPirata = glm::translate(modelMatrixPirata, glm::vec3(0, 0, -0.02));
-		animationIndex = 2;
-	}
-
 	glfwPollEvents();
 	return continueApplication;
 }
@@ -1015,7 +954,7 @@ void applicationLoop() {
 	modelMatrixMayow = glm::translate(modelMatrixMayow, glm::vec3(13.0f, 0.05f, -5.0f));
 	modelMatrixMayow = glm::rotate(modelMatrixMayow, glm::radians(-90.0f), glm::vec3(0, 1, 0));
 
-	modelMatrixPirata = glm::translate(modelMatrixPirata, glm::vec3(6.0f, 0.05f, -10.0f));
+	modelMatrixKero = glm::translate(modelMatrixKero, glm::vec3(13.0f, 12.0f, 5.0f));
 
 	// Variables to interpolation key frames
 	fileName = "../animaciones/animation_dart_joints.txt";
@@ -1050,12 +989,6 @@ void applicationLoop() {
 			axis = glm::axis(glm::quat_cast(modelMatrixDart));
 			angleTarget = glm::angle(glm::quat_cast(modelMatrixDart));
 			target = modelMatrixDart[3];
-		}
-		// Pirata
-		else if (modelSelected == 3) {
-			axis = glm::axis(glm::quat_cast(modelMatrixPirata));
-			angleTarget = glm::angle(glm::quat_cast(modelMatrixPirata));
-			target = modelMatrixPirata[3];
 		}
 		else{
 			axis = glm::axis(glm::quat_cast(modelMatrixMayow));
@@ -1189,15 +1122,6 @@ void applicationLoop() {
 			shaderTerrain.setFloat("pointLights[" + std::to_string(lamp1Position.size() + i) + "].quadratic", 0.02);
 		}
 
-		// Si se considera el valor de GL_GREATER, no observaremos nada en la escena,
-		// ya que la prueba de profundidad nunca pasa, es decir, nunca se actualiza
-		// el buffer, en este caso observaríamos todo en color azul
-		//glDepthFunc(GL_GREATER);
-
-		// Por lo que se considera el valor por default de GL_LESS, de tal forma
-		// que no es necesario indicarlo, dado que arriba se hace referencia
-		//glDepthFunc(GL_LESS);
-
 		/*******************************************
 		 * Terrain Cesped
 		 *******************************************/
@@ -1260,12 +1184,12 @@ void applicationLoop() {
 		}
 
 		// Grass
-		glDisable(GL_CULL_FACE);
+		/*glDisable(GL_CULL_FACE);
 		glm::vec3 grassPosition = glm::vec3(0.0, 0.0, 0.0);
 		grassPosition.y = terrain.getHeightTerrain(grassPosition.x, grassPosition.z);
 		modelGrass.setPosition(grassPosition);
 		modelGrass.render();
-		glEnable(GL_CULL_FACE);
+		glEnable(GL_CULL_FACE);*/
 
 		// Dart lego
 		// Se deshabilita el cull faces IMPORTANTE para la capa
@@ -1328,11 +1252,10 @@ void applicationLoop() {
 		mayowModelAnimate.setAnimationIndex(animationIndex);
 		mayowModelAnimate.render(modelMatrixMayowBody);
 
-		modelMatrixPirata[3][1] = terrain.getHeightTerrain(modelMatrixPirata[3][0], modelMatrixPirata[3][2]);
-		glm::mat4 modelMatrixPirataBody = glm::mat4(modelMatrixPirata);
-		modelMatrixPirataBody = glm::scale(modelMatrixPirataBody, glm::vec3(0.15, 0.15, 0.15));
-		pirataModelAnimate.setAnimationIndex(animationIndex);
-		pirataModelAnimate.render(modelMatrixPirataBody);
+		//modelMatrixKero[3][1] = terrain.getHeightTerrain(modelMatrixKero[3][0], modelMatrixKero[3][2]);
+		//glm::mat4 modelMatrixKeroBody = glm::mat4(modelMatrixKero);
+		//modelMatrixKeroBody = glm::scale(modelMatrixKeroBody, glm::vec3(1.0f, 1.0f, 1.0f));
+		//keroModelAnimate.render(modelMatrixKeroBody);
 
 		/*******************************************
 		 * Skybox
@@ -1349,7 +1272,7 @@ void applicationLoop() {
 		skyboxSphere.render();
 		glCullFace(oldCullFaceMode);
 		glDepthFunc(oldDepthFuncMode);
-		
+
 		/**********
 		 * Update the position with alpha objects
 		 */
@@ -1359,6 +1282,10 @@ void applicationLoop() {
 		blendingUnsorted.find("lambo")->second = glm::vec3(modelMatrixLambo[3]);
 		// Update the helicopter
 		blendingUnsorted.find("heli")->second = glm::vec3(modelMatrixHeli[3]);
+		//update the grass
+		glm::vec3 grassPosition = blendingUnsorted.find("grass")->second;
+		grassPosition[1] = terrain.getHeightTerrain(grassPosition[0], grassPosition[2]);
+		blendingUnsorted.find("grass")->second = grassPosition;
 
 		/**********
 		 * Sorter with alpha objects
@@ -1374,7 +1301,8 @@ void applicationLoop() {
 		 * Render de las transparencias
 		 */
 		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glBlendColor(0, 1, 0, 1);
+		glBlendFunc(GL_CONSTANT_COLOR, GL_ONE);
 		glDisable(GL_CULL_FACE);
 		for(std::map<float, std::pair<std::string, glm::vec3> >::reverse_iterator it = blendingSorted.rbegin(); it != blendingSorted.rend(); it++){
 			if(it->second.first.compare("aircraft") == 0){
@@ -1413,7 +1341,12 @@ void applicationLoop() {
 				modelMatrixHeliHeli = glm::translate(modelMatrixHeliHeli, glm::vec3(0.0, 0.0, 0.249548));
 				modelHeliHeli.render(modelMatrixHeliHeli);
 			}
+			else if(it->second.first.compare("grass") == 0){
+				modelGrass.setPosition(it->second.second);	
+				modelGrass.render();
+			}
 		}
+		glDisable(GL_BLEND);
 		glEnable(GL_CULL_FACE);
 
 		/*******************************************
@@ -1506,31 +1439,17 @@ void applicationLoop() {
 		mayowCollider.c = glm::vec3(modelmatrixColliderMayow[3]);
 		addOrUpdateColliders(collidersOBB, "mayow", mayowCollider, modelMatrixMayow);
 
-		// Collider de pirata
-		AbstractModel::OBB pirataCollider;
-		glm::mat4 modelMatrixColliderPirata = glm::mat4(modelMatrixPirata);
-		// Obtener el quaternion antes de obtener las transformaciones
-		// Set the orientation of collider before doing the scale
-		pirataCollider.u = glm::quat_cast(modelMatrixColliderPirata);
-		// Realizar la transformación de Blender
-		// Verificar de cuanto es, abrir el modelo en Blender, presionar la tecla N
-		// y considerar los valores especificados en SCALE, multiplicar dicho valor
-		// por 100, en este caso x = y = z = 0.025 => 2.5
-		modelMatrixColliderPirata = glm::scale(modelMatrixColliderPirata, glm::vec3(2.5, 2.5, 2.5));
-		// Realizar escala de definición del modelo
-		modelMatrixColliderPirata = glm::scale(modelMatrixColliderPirata, glm::vec3(0.15, 0.15, 0.15));
-		modelMatrixColliderPirata = glm::translate(modelMatrixColliderPirata,
-			glm::vec3(pirataModelAnimate.getObb().c.x,
-				pirataModelAnimate.getObb().c.y,
-				pirataModelAnimate.getObb().c.z));
-		// Se aplican las escalas al collider, en el orden en que se definieron
-		pirataCollider.e = pirataModelAnimate.getObb().e * glm::vec3(2.5, 2.5, 2.5) * glm::vec3(0.15, 0.15, 0.15);
-		pirataCollider.c = glm::vec3(modelMatrixColliderPirata[3]);
-		addOrUpdateColliders(collidersOBB, "pirata", pirataCollider, modelMatrixPirata);
-		// Es importante observar que el modelo al realizar las respectivas animaciones,
-		// se desajusta de la caja de colisión que lo contiene, ya que este conservara
-		// las dimesiones de la de la posición inicial del modelo, esto se podría solucionar
-		// de manera optima en el shader, para que las dimesiones varien en tiempo real
+		//Collider kero
+		AbstractModel::OBB keroCollider;
+		glm::mat4 modelMatrixKeroCollider = glm::mat4(modelMatrixKero);
+		//Obetner  el quaternion antes de ralizar cualquier transformacion
+		keroCollider.u = glm::quat_cast(modelMatrixKeroCollider);
+
+
+		/*modelMatrixKeroCollider = glm::translate(modelMatrixKeroCollider, glm::vec3(keroModelAnimate.getObb().c));
+		keroCollider.e = keroModelAnimate.getObb().e;
+		keroCollider.c = glm::vec3(modelMatrixKero[3]);
+		addOrUpdateColliders(collidersOBB, "kero",keroCollider, modelMatrixKero);*/
 
 		/*******************************************
 		 * Render de colliders
@@ -1655,8 +1574,6 @@ void applicationLoop() {
 						modelMatrixMayow = std::get<1>(jt->second);
 					if (jt->first.compare("dart") == 0)
 						modelMatrixDart = std::get<1>(jt->second);
-					if (jt->first.compare("pirata") == 0)
-						modelMatrixPirata = std::get<1>(jt->second);
 				}
 			}
 		}
@@ -1722,13 +1639,7 @@ void applicationLoop() {
 
 		// Constantes de animaciones
 		rotHelHelY += 0.5;
-		// Animación Idle de los modelos
-		if (modelSelected == 2) {
-			animationIndex = 1;
-		}
-		else if (modelSelected == 3) {
-			animationIndex = 0;
-		}
+		animationIndex = 1;
 
 		/*******************************************
 		 * State machines
@@ -1758,5 +1669,6 @@ int main(int argc, char **argv) {
 	init(800, 700, "Window GLFW", false);
 	applicationLoop();
 	destroy();
+	std::getchar();
 	return 1;
 }
