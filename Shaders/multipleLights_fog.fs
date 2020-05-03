@@ -55,7 +55,7 @@ uniform SpotLight spotLights[MAX_SPOT_LIGHTS];
 
 uniform vec3 viewPos;  
 uniform sampler2D texture1;
-
+//la siguiente linea contiene una variable global que nos permite cambiar el color 
 uniform vec3 fogColor;
 
 vec3 calculateDirectionalLight(Light light, vec3 direction){
@@ -108,6 +108,7 @@ void main()
 	vec4 colorText = texture(texture1, our_uv);
 	if(colorText.a < 0.1)
 		discard;
-    color = vec4(calculateDirectionalLight(directionalLight.light, directionalLight.direction) + calculatePointLights() + calculateSpotLights(), colorText.a);
-    color = mix(vec4(fogColor, 1.0), color, visibility);
+	color = vec4(calculateDirectionalLight(directionalLight.light, directionalLight.direction) + calculatePointLights() + calculateSpotLights(), colorText.a);// calulo del color 
+	color=mix(vec4(fogColor,1.0f),color,visibility);// el uno indica que es totalmente denso  y visibility es 
+	//el factr de mezcla
 }

@@ -9,7 +9,7 @@ layout (location = 5) in vec4 weights;
 out vec3 our_normal;
 out vec3 fragPos;
 out vec2 our_uv;
-out float visibility;
+out float visibility; 
 
 uniform mat4 projection;
 uniform mat4 view;
@@ -21,8 +21,8 @@ uniform int numBones;
 uniform vec2 scaleUV;
 uniform vec2 offsetX;
 
-uniform float density = 0.008;
-uniform float gradient = 1.5;
+uniform float density= 0.05;
+uniform float gradient=1.5;
 
 void main(){
 
@@ -38,7 +38,7 @@ void main(){
 	vec4 fragPosWorldSpace = model * boneTransform * vec4(in_position, 1.0);
 	gl_Position = projection * view * fragPosWorldSpace;
 	fragPos = vec3(fragPosWorldSpace);
-	vec3 fragPosViewSpace = vec3(view * fragPosWorldSpace);
+	vec3 fragPosViewSpace=vec3(view* fragPosWorldSpace);
 	our_normal = mat3(transpose(inverse(model * boneTransform))) * in_normal;
 	if(scaleUV.x == 0 && scaleUV.y == 0)
 		our_uv = in_uv;
@@ -46,7 +46,8 @@ void main(){
 		our_uv = scaleUV * in_uv;
 	our_uv.x += offsetX.x;
 	our_uv.y += offsetX.y;
-	float distance = length(fragPosViewSpace);
-	visibility = exp(-pow((distance * density), gradient));
-	visibility = clamp(visibility, 0.0, 1.0);
+	float distance=length(fragPosViewSpace);
+	visibility=exp(-pow((distance*density),gradient));
+	//para acotar de 0 a 1 como en la grafica usamos la siguiente función.No pued ser negativo ni mayor a 1
+	visibility=clamp(visibility,0.0,1.0);
 }
