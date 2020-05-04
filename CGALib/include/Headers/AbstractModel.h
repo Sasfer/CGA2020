@@ -48,6 +48,26 @@ Fecha: 08/02/2018
 class DLL_PUBLIC AbstractModel
 {
 public:
+	class CYL {
+	public:
+		CYL() {
+		}
+
+		// Para definir un cilindro se requiere de:
+		// ct -> Centro superior del cilindro
+		// cb -> Centro inferior del cilindro
+		// ratio -> Radio del cilindro
+		CYL(glm::vec3 ct, glm::vec3 cb, float ratio) {
+			this->ct = ct;
+			this->cb = cb;
+			this->ratio = ratio;
+		}
+
+		glm::vec3 c, ct, cb;
+		float ratio;
+		float height;
+	};
+
 	class SBB {
 	public:
 		SBB() {
@@ -258,6 +278,9 @@ public:
 		return obb;
 	}
 
+	const CYL& getCyl() const {
+		return cyl;
+	}
 
 protected:
 	Shader * shader_ptr;
@@ -271,6 +294,7 @@ protected:
 	AABB aabb;
 	SBB sbb;
 	OBB obb;
+	CYL cyl;
 };
 
 #endif // ABSTRACTMODEL_H

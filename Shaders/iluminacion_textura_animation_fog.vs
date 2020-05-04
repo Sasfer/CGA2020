@@ -9,6 +9,7 @@ layout (location = 5) in vec4 weights;
 out vec3 our_normal;
 out vec3 fragPos;
 out vec2 our_uv;
+// Flotante que representara la visibilidad que se calculara
 out float visibility;
 
 uniform mat4 projection;
@@ -21,7 +22,9 @@ uniform int numBones;
 uniform vec2 scaleUV;
 uniform vec2 offsetX;
 
-uniform float density = 0.008;
+// Densidad y gadiente que se colocara
+// para la función de visibilidad
+uniform float density = 0.05;
 uniform float gradient = 1.5;
 
 void main(){
@@ -46,7 +49,9 @@ void main(){
 		our_uv = scaleUV * in_uv;
 	our_uv.x += offsetX.x;
 	our_uv.y += offsetX.y;
+	// Calculo de la distancia
 	float distance = length(fragPosViewSpace);
+	// Calculo de la visibilidad
 	visibility = exp(-pow((distance * density), gradient));
-	visibility = clamp(visibility, 0.0, 1.0);
+	visibility = clamp(visibility,0.0, 1.0);
 }

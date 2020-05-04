@@ -57,6 +57,30 @@ void addOrUpdateColliders(
 		std::get<1>(it->second) = std::get<2>(it->second);
 }
 
+void addOrUpdateColliders(
+	std::map<std::string,
+	std::tuple<AbstractModel::CYL, glm::mat4, glm::mat4> > &colliders,
+	std::string name, AbstractModel::CYL collider, glm::mat4 transform) {
+	std::map<std::string, std::tuple<AbstractModel::CYL, glm::mat4, glm::mat4> >::iterator it =
+		colliders.find(name);
+	if (it != colliders.end()) {
+		std::get<0>(it->second) = collider;
+		std::get<2>(it->second) = transform;
+	}
+	else
+		colliders[name] = std::make_tuple(collider, glm::mat4(1.0), transform);
+}
+
+void addOrUpdateColliders(
+	std::map<std::string,
+	std::tuple<AbstractModel::CYL, glm::mat4, glm::mat4> > &colliders,
+	std::string name) {
+	std::map<std::string, std::tuple<AbstractModel::CYL, glm::mat4, glm::mat4> >::iterator it =
+		colliders.find(name);
+	if (it != colliders.end())
+		std::get<1>(it->second) = std::get<2>(it->second);
+}
+
 void addOrUpdateCollisionDetection(std::map<std::string, bool> &collisionDetector,
 		std::string name, bool isCollision) {
 	std::map<std::string, bool>::iterator colIt = collisionDetector.find(name);
@@ -95,14 +119,23 @@ bool raySphereIntersect(glm::vec3 orig, glm::vec3 dest, glm::vec3 dir, AbstractM
 }
 
 bool testSphereSphereIntersection(AbstractModel::SBB sbb1, AbstractModel::SBB sbb2) {
-	float d = glm::distance(sbb1.c, sbb2.c);
+	//float d = glm::distance(sbb1.c, sbb2.c);
 	/*float d = sqrt(
 	pow(sbb1.center.x - sbb2.center.x, 2)
 	+ pow(sbb1.center.y - sbb2.center.y, 2)
 	+ pow(sbb1.center.y - sbb2.center.y, 2));
 	std::cout << "d:" << d << std::endl;
 	std::cout << "sum:" << sbb1.ratio + sbb2.ratio << std::endl;*/
-	if (d <= (sbb1.ratio + sbb2.ratio))
+	//if (d <= (sbb1.ratio + sbb2.ratio))
+	//	return true;
+	//return false;
+
+	glm::vec3 d = sbb1.c - sbb2.c;
+	float d2 = glm::dot(d, d);
+
+	float rs = sbb1.ratio + sbb2.ratio;
+
+	if (d2 <= (rs * rs))
 		return true;
 	return false;
 }
@@ -210,5 +243,65 @@ bool testOBBOBB(AbstractModel::OBB a, AbstractModel::OBB b){
 	return true;
 }
 
+bool testCylinderOBox(AbstractModel::CYL cyl, AbstractModel::OBB obb) {
+	float d = 0.0;
+	glm::quat qinv = glm::inverse(obb.u);
+	cyl.c = qinv * glm::vec4(cyl.c, 1.0);
+	obb.c = qinv * glm::vec4(obb.c, 1.0);
+	AbstractModel::AABB aabb;
+	aabb.mins = obb.c - obb.e;
+	aabb.maxs = obb.c + obb.e;
+
+	// Se verifica si el cilindro esta contenido dentro de la caja
+	if ((cyl.c[0] - cyl.ratio) >= aabb.mins[0] && (cyl.c[0] + cyl.ratio) <= aabb.maxs[0]
+		&& (cyl.c[1] - cyl.ratio) >= aabb.mins[1] && (cyl.c[1] + cyl.ratio) <= aabb.maxs[1]
+		&& cyl.cb[2] >= aabb.mins[2] && cyl.ct[2] <= aabb.maxs[2])
+		return true;
+
+	// En caso contrario se verifica si hay colision en alguna parte de la caja
+	for (int i = 0; i < 2; i++) {
+		if (cyl.c[i] < aabb.mins[i])
+			d += (cyl.c[i] - aabb.mins[i]) * (cyl.c[i] - aabb.mins[i]);
+		else if (cyl.c[i] > aabb.maxs[i])
+			d += (cyl.c[i] - aabb.maxs[i]) * (cyl.c[i] - aabb.maxs[i]);
+	}
+
+	if (cyl.cb[2] < aabb.mins[2])
+		d += (cyl.cb[2] - aabb.mins[2]) * (cyl.cb[2] - aabb.mins[2]);
+	else if (cyl.ct[2] > aabb.maxs[2])
+		d += (cyl.ct[2] - aabb.maxs[2]) * (cyl.ct[2] - aabb.maxs[2]);
+
+	if (d <= cyl.ratio * cyl.ratio)
+		return true;
+	return false;
+}
+
+bool testSphereCylinder(AbstractModel::SBB sbb, AbstractModel::CYL cyl) {
+	// Se calcula la distancia al cuadrado entre el centro de la esfera c y el segmento ab, donde
+	// a = centro superior del cilindro -> ct		b = centro inferior del cilindro -> cb
+	float d;
+
+	glm::vec3 ab = cyl.cb - cyl.ct;
+	glm::vec3 ac = sbb.c - cyl.ct;
+	glm::vec3 bc = sbb.c - cyl.cb;
+
+	float e = glm::dot(ac, ab);
+	float f = glm::dot(ab, ab);
+
+	// Manejar casos donde C se proyecta fuera de AB
+	if (e <= 0.0f) 
+		d = glm::dot(ac, ac);
+	else if(e >= f) 
+		d = glm::dot(bc, bc);
+	// Manejar casos donde C se rpoyecta en AB
+	else 
+		d = glm::dot(ac, ac) - ((e * e )/f);
+
+	float radius = sbb.ratio + cyl.ratio;
+
+	if (d <= (radius * radius)) 
+		return true;
+	return false;
+}
 
 #endif /* COLISIONES_H_ */

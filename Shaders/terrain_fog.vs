@@ -13,7 +13,7 @@ uniform mat4 projection;
 uniform mat4 view;
 uniform mat4 model;
 
-uniform float density = 0.008;
+uniform float density = 0.05;
 uniform float gradient = 1.5;
 
 void main(){
@@ -23,8 +23,10 @@ void main(){
 	fragPos = vec3(fragPosWorldSpace);
 	our_normal = mat3(transpose(inverse(model))) * in_normal;
 	our_uv = in_uv;
+	// Calculo de la distancia
 	float distance = length(fragPosViewSpace);
+	// Calculo de la visibilidad
 	visibility = exp(-pow((distance * density), gradient));
-	visibility = clamp(visibility, 0.0, 1.0);
+	visibility = clamp(visibility,0.0, 1.0);
 }
 

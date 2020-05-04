@@ -184,11 +184,23 @@ std::vector<glm::vec3> lamp2Position = { glm::vec3(-36.52, 0, -23.24),
 		glm::vec3(-52.73, 0, -3.90) };
 std::vector<float> lamp2Orientation = {21.37 + 90, -65.0 + 90};
 
+// Los objetos debes tener un orden específico
+// por lo que se debe tener cierta consideración
+
+// Primero se deben de dibujar los objetos que no
+// tienen tranparencia, y luego los que si la tienen
+
+// 1. Dibujar objetos de color sólido
+// 2. Ordenar los objetos transparentes
+// 3. Dibujar los objetos ordenados
+//		Para oredenar los objetos se considerara la distancia euclideana
+
 // Blending model unsorted
 std::map<std::string, glm::vec3> blendingUnsorted = {
 		{"aircraft", glm::vec3(10.0, 0.0, -17.5)},
 		{"lambo", glm::vec3(23.0, 0.0, 0.0)},
-		{"heli", glm::vec3(5.0, 10.0, -5.0)}
+		{"heli", glm::vec3(5.0, 10.0, -5.0)},
+		{"grass", glm::vec3(0.0,0.0,0.0)}
 };
 
 double deltaTime;
@@ -1260,12 +1272,12 @@ void applicationLoop() {
 		}
 
 		// Grass
-		glDisable(GL_CULL_FACE);
+		/*glDisable(GL_CULL_FACE);
 		glm::vec3 grassPosition = glm::vec3(0.0, 0.0, 0.0);
 		grassPosition.y = terrain.getHeightTerrain(grassPosition.x, grassPosition.z);
 		modelGrass.setPosition(grassPosition);
 		modelGrass.render();
-		glEnable(GL_CULL_FACE);
+		glEnable(GL_CULL_FACE);*/
 
 		// Dart lego
 		// Se deshabilita el cull faces IMPORTANTE para la capa
@@ -1359,7 +1371,11 @@ void applicationLoop() {
 		blendingUnsorted.find("lambo")->second = glm::vec3(modelMatrixLambo[3]);
 		// Update the helicopter
 		blendingUnsorted.find("heli")->second = glm::vec3(modelMatrixHeli[3]);
-
+		// Update the grass
+		// Se crea un vector
+		glm::vec3 grassPosition = blendingUnsorted.find("grass")->second;
+		grassPosition[1] = terrain.getHeightTerrain(grassPosition[0], grassPosition[2]);
+		blendingUnsorted.find("grass")->second = grassPosition;
 		/**********
 		 * Sorter with alpha objects
 		 */
@@ -1367,6 +1383,7 @@ void applicationLoop() {
 		std::map<std::string, glm::vec3>::iterator itblend;
 		for(itblend = blendingUnsorted.begin(); itblend != blendingUnsorted.end(); itblend++){
 			float distanceFromView = glm::length(camera->getPosition() - itblend->second);
+			//Construcción de un objeto compuesto, considerando la etiqueta y el objeto
 			blendingSorted[distanceFromView] = std::make_pair(itblend->first, itblend->second);
 		}
 
@@ -1413,7 +1430,12 @@ void applicationLoop() {
 				modelMatrixHeliHeli = glm::translate(modelMatrixHeliHeli, glm::vec3(0.0, 0.0, 0.249548));
 				modelHeliHeli.render(modelMatrixHeliHeli);
 			}
+			else if (it->second.first.compare("grass") == 0) {
+				modelGrass.setPosition(it->second.second);
+				modelGrass.render();
+			}
 		}
+		glDisable(GL_BLEND);
 		glEnable(GL_CULL_FACE);
 
 		/*******************************************

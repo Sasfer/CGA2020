@@ -82,6 +82,8 @@ void Model::loadModel(const std::string & path) {
 	// Se procesa el nodo raiz recursivamente.
 	this->processNode(scene->mRootNode, scene);
 
+	/*******************************************************************/
+
 	// Se crea la SBB
 	this->sbb.c = glm::vec3((this->aabb.mins.x + this->aabb.maxs.x) / 2.0f,
 			(this->aabb.mins.y + this->aabb.maxs.y) / 2.0f,
@@ -112,6 +114,39 @@ void Model::loadModel(const std::string & path) {
 	// Calculo del radio
 	this->sbb.ratio = sqrt(auxD) / 2.0f;
 	
+	/*******************************************************************/
+
+	// Se crea el CYL
+	double disXC, disYC, auxDC;
+
+	// Se considera la distancia en el eje Z 
+	// como la altura del cilindro
+	this->cyl.height = sqrt(pow(this->aabb.mins.z - this->aabb.maxs.z, 2));
+
+	// Obtendión del centro en general, para obtener la posición
+	// del centro del top y bottom del cilindro
+	this->cyl.c = glm::vec3((this->aabb.mins.x + this->aabb.maxs.x) / 2.0f,
+		(this->aabb.mins.y + this->aabb.maxs.y) / 2.0f,
+		(this->aabb.mins.z + this->aabb.maxs.z) / 2.0f);
+
+	this->cyl.ct = this->cyl.c + glm::vec3(0.0, this->cyl.height/2.0, 0.0);
+	this->cyl.cb = this->cyl.c - glm::vec3(0.0, this->cyl.height/2.0, 0.0);
+	
+	// Para calcular el radio del cilindro se considera
+	// la distancia más grande entre el eje X y Y
+	disXC = pow(this->aabb.mins.x - this->aabb.maxs.x, 2);
+	disYC = pow(this->aabb.mins.y - this->aabb.maxs.y, 2);
+
+	if (disXC > disYC)
+		auxDC = disXC;
+	else
+		auxDC = disYC;
+
+	// Calculo del radio
+	this->cyl.ratio = sqrt(auxDC) / 2.0f;
+	
+	/*******************************************************************/
+
 	// Se crea la obb
 	this->obb.c = this->sbb.c;
 	this->obb.e.x = aabb.maxs.x - aabb.mins.x;
