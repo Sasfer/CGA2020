@@ -200,6 +200,7 @@ std::map<std::string, glm::vec3> blendingUnsorted = {
 		{"aircraft", glm::vec3(10.0, 0.0, -17.5)},
 		{"lambo", glm::vec3(23.0, 0.0, 0.0)},
 		{"heli", glm::vec3(5.0, 10.0, -5.0)},
+		{"pirata", glm::vec3(10.0, 0.0, -15.5)},
 		{"grass", glm::vec3(0.0,0.0,0.0)}
 };
 
@@ -358,7 +359,7 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	modelLampPost2.setShader(&shaderMulLighting);
 
 	//Grass
-	modelGrass.loadModel("../models/grass/grassModel.obj");
+	modelGrass.loadModel("../models/grassSplit/grassSplit.obj");
 	modelGrass.setShader(&shaderMulLighting);
 
 	//Mayow
@@ -1339,13 +1340,13 @@ void applicationLoop() {
 		modelMatrixMayowBody = glm::scale(modelMatrixMayowBody, glm::vec3(0.021, 0.021, 0.021));
 		mayowModelAnimate.setAnimationIndex(animationIndex);
 		mayowModelAnimate.render(modelMatrixMayowBody);
-
+		/*
 		modelMatrixPirata[3][1] = terrain.getHeightTerrain(modelMatrixPirata[3][0], modelMatrixPirata[3][2]);
 		glm::mat4 modelMatrixPirataBody = glm::mat4(modelMatrixPirata);
 		modelMatrixPirataBody = glm::scale(modelMatrixPirataBody, glm::vec3(0.15, 0.15, 0.15));
 		pirataModelAnimate.setAnimationIndex(animationIndex);
 		pirataModelAnimate.render(modelMatrixPirataBody);
-
+		*/
 		/*******************************************
 		 * Skybox
 		 *******************************************/
@@ -1371,11 +1372,14 @@ void applicationLoop() {
 		blendingUnsorted.find("lambo")->second = glm::vec3(modelMatrixLambo[3]);
 		// Update the helicopter
 		blendingUnsorted.find("heli")->second = glm::vec3(modelMatrixHeli[3]);
+		// Update the pirata
+		blendingUnsorted.find("pirata")->second = glm::vec3(modelMatrixPirata[3]);
 		// Update the grass
 		// Se crea un vector
 		glm::vec3 grassPosition = blendingUnsorted.find("grass")->second;
 		grassPosition[1] = terrain.getHeightTerrain(grassPosition[0], grassPosition[2]);
 		blendingUnsorted.find("grass")->second = grassPosition;
+		
 		/**********
 		 * Sorter with alpha objects
 		 */
@@ -1391,7 +1395,7 @@ void applicationLoop() {
 		 * Render de las transparencias
 		 */
 		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_CONSTANT_COLOR);
 		glDisable(GL_CULL_FACE);
 		for(std::map<float, std::pair<std::string, glm::vec3> >::reverse_iterator it = blendingSorted.rbegin(); it != blendingSorted.rend(); it++){
 			if(it->second.first.compare("aircraft") == 0){
@@ -1433,6 +1437,14 @@ void applicationLoop() {
 			else if (it->second.first.compare("grass") == 0) {
 				modelGrass.setPosition(it->second.second);
 				modelGrass.render();
+			}
+			else if (it->second.first.compare("pirata") == 0) {
+				// Render for the pirata model
+				glm::mat4 modelMatrixPirataBlend = glm::mat4(modelMatrixPirata);
+				modelMatrixPirataBlend[3][1] = terrain.getHeightTerrain(modelMatrixPirataBlend[3][0], modelMatrixPirataBlend[3][2]) + 2.0;
+				modelMatrixPirataBlend = glm::scale(modelMatrixPirataBlend, glm::vec3(0.15, 0.15, 0.15));
+				modelMatrixPirataBlend = glm::translate(modelMatrixPirataBlend, glm::vec3(0.0, -12.5, 0.0));
+				pirataModelAnimate.render(modelMatrixPirataBlend);
 			}
 		}
 		glDisable(GL_BLEND);
