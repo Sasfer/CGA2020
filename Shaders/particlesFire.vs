@@ -48,6 +48,7 @@ const vec2 texCoords[] = vec2[](vec2(0,0), vec2(1,0), vec2(1,1), vec2(0,0), vec2
 
 void main()
 {
+	//Fase1 . Calculo de la edad, posición y velodidad 
 	if(Pass == 1){
 		Age = VertexAge + DeltaT;
 
@@ -64,6 +65,7 @@ void main()
 	    }
 	}
 	else{
+	//Fase 2 , se renderiza la escena. 
 		Transp = 0.0;
 	    if(VertexAge >= 0.0) {
 	        gl_Position = projection * vec4((view * model * vec4(VertexPosition,1)).xyz + offsets[gl_VertexID] * ParticleSize, 1.0);
